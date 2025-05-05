@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Cine AI</string>
+    <!-- Facebook Configuration -->
+    <string name="facebook_app_id">YOUR_FACEBOOK_APP_ID</string>
+    <string name="fb_login_protocol_scheme">fbYOUR_FACEBOOK_APP_ID</string>
+    <string name="facebook_client_token">YOUR_FACEBOOK_CLIENT_TOKEN</string>
+    <string name="default_notification_channel_id">movie_booking_notifications</string>
+    <string name="default_notification_channel_name">Movie Booking Notifications</string>
+    <string name="booking_channel_id">booking_notifications</string>
+    <string name="booking_channel_name">Booking Notifications</string>
+    <string name="movie_reminder_channel_id">movie_reminder_notifications</string>
+    <string name="movie_reminder_channel_name">Movie Reminders</string>
+    <string name="promotion_channel_id">promotion_notifications</string>
+    <string name="promotion_channel_name">Promotions and Offers</string>
+</resources>
