@@ -21,3 +21,11 @@ val MontserratFamily = FontFamily(
     Font(R.font.montserrat_medium, FontWeight.Medium),
     Font(R.font.montserrat_semibold, FontWeight.SemiBold)
 )
+
+val LexendDecaFamily = FontFamily(
+    Font(R.font.lexend_deca_regular, FontWeight.Normal),
+    Font(R.font.lexend_deca_medium, FontWeight.Medium),
+    Font(R.font.lexend_deca_light, FontWeight.Light),
+    Font(R.font.lexend_deca_bold, FontWeight.Bold),
+    Font(R.font.lexend_deca_semibold, FontWeight.SemiBold)
+)
