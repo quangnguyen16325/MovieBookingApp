@@ -2,6 +2,17 @@ package com.example.moviebooking.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+// Bảng màu chính của Lotte Cinema
+val LotteRed = Color(0xFFE51937)      // Màu đỏ chính của Lotte
+val LotteDarkRed = Color(0xFFC41230)  // Màu đỏ đậm của Lotte
+val LotteGray = Color(0xFF333333)     // Màu xám đậm của Lotte
+val LotteLightGray = Color(0xFFEEEEEE) // Màu xám nhạt của Lotte
+val LotteBackground = Color(0xFF1A1A1A) // Màu nền tối
+val LotteCardBackground = Color(0xFF252525) // Màu nền card
+val LotteGold = Color(0xFFFFD700)     // Màu gold cho rating
+
+//val AccentColor = LotteRed
+
 val PrimaryColor = Color(0xFF2196F3) // Blue
 val PrimaryVariant = Color(0xFF1976D2) // Dark Blue
 val AccentColor = Color(0xFFFF9800) // Orange

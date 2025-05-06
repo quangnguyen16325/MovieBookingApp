@@ -2,6 +2,9 @@ package com.example.moviebooking.ui.home
 
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,13 +15,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -43,23 +52,33 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.moviebooking.R
 import com.example.moviebooking.data.model.MovieModel
 import com.example.moviebooking.ui.auth.AuthViewModel
 import com.example.moviebooking.ui.components.MovieCarousel
+import kotlinx.coroutines.delay
+import com.example.moviebooking.ui.theme.BackgroundDark
+import com.example.moviebooking.ui.theme.BackgroundLight
+import com.example.moviebooking.ui.theme.PrimaryColor
+import com.example.moviebooking.ui.theme.SurfaceDark
+import com.example.moviebooking.ui.theme.SurfaceLight
+import com.example.moviebooking.ui.theme.TextPrimaryDark
+import com.example.moviebooking.ui.theme.TextPrimaryLight
+import com.example.moviebooking.ui.theme.TextSecondaryDark
+import com.example.moviebooking.ui.theme.TextSecondaryLight
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import coil.request.CachePolicy
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,11 +89,15 @@ fun HomeScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToBookings: () -> Unit,
-    onNavigationIconClick: () -> Unit, // Thêm tham số này để xử lý sự kiện click menu
+    onNavigationIconClick: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = viewModel()
 ) {
+    val isDarkTheme = isSystemInDarkTheme()
+    val backgroundColor = if (isDarkTheme) BackgroundDark else BackgroundLight
+    val textPrimaryColor = if (isDarkTheme) TextPrimaryDark else TextPrimaryLight
+
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
@@ -106,30 +129,56 @@ fun HomeScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Cine AI") },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+//                        Text(
+//                            text = "Cine AI",
+//                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+//                            color = textPrimaryColor
+//                        )
+                        Image(
+                            painter = painterResource(id = R.drawable.cineai_1),
+                            contentDescription = "Lotte Cinema",
+                            modifier = Modifier.height(32.dp)
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigationIconClick) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "Menu",
+                            tint = PrimaryColor
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = onNavigateToSearch) {
-                        Icon(Icons.Default.Search, contentDescription = "Search")
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = PrimaryColor
+                        )
                     }
                     IconButton(onClick = onNavigateToNotifications) {
-                        Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Notifications",
+                            tint = PrimaryColor
+                        )
                     }
                     IconButton(onClick = onNavigateToProfile) {
                         val userState by authViewModel.currentUser.collectAsState()
                         val profileImage = userState?.profileImage
 
                         if (profileImage.isNullOrEmpty()) {
-                            // Fallback khi không có ảnh đại diện
                             Icon(
                                 imageVector = Icons.Default.AccountCircle,
                                 contentDescription = "Profile",
                                 modifier = Modifier.size(32.dp),
-                                tint = MaterialTheme.colorScheme.onSurface
+                                tint = PrimaryColor
                             )
                         } else {
                             AsyncImage(
@@ -138,8 +187,6 @@ fun HomeScreen(
                                     .crossfade(true)
                                     .placeholder(R.drawable.ic_default_user)
                                     .error(R.drawable.ic_default_user)
-                                    .diskCachePolicy(CachePolicy.ENABLED)
-                                    .memoryCachePolicy(CachePolicy.ENABLED)
                                     .build(),
                                 contentDescription = "Profile",
                                 modifier = Modifier
@@ -151,7 +198,9 @@ fun HomeScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = if (isDarkTheme) SurfaceDark else SurfaceLight,
+                    titleContentColor = textPrimaryColor,
+                    actionIconContentColor = textPrimaryColor
                 )
             )
         }
@@ -164,66 +213,51 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
+                    .background(backgroundColor)
                     .verticalScroll(rememberScrollState())
             ) {
-                // Welcome message
+                // Featured Slider / Carousel
+                FeaturedMovieBanner(
+                    movies = nowShowingMovies.take(5),
+                    onMovieClick = { onNavigateToMovieDetail(it.id) }
+                )
+
+                // Chào mừng người dùng
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(
                         text = "Welcome back,",
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            color = if (isDarkTheme) TextSecondaryDark else TextSecondaryLight
+                        )
                     )
                     Text(
                         text = currentUser?.fullName ?: "Guest",
-                        style = MaterialTheme.typography.headlineSmall
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimaryColor
+                        )
                     )
                 }
 
-                // Your bookings card
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                    onClick = onNavigateToBookings
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "Your Bookings",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                text = "Check your upcoming bookings",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                            )
-                        }
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_ticket),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
+                // Quick Access Card
+                QuickAccessCard(
+                    onBookingsClick = onNavigateToBookings,
+                    onProfileClick = onNavigateToProfile
+                )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Now Showing Movies
                 MovieCarousel(
                     title = "Now Showing",
                     movies = nowShowingMovies,
                     isLoading = isNowShowingLoading,
-                    onMovieClick = { movie -> onNavigateToMovieDetail(movie.id) },
+                    onMovieClick = { onNavigateToMovieDetail(it.id) },
+                    onSeeAllClick = { /* Navigate to full now showing list */ },
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
 
@@ -234,11 +268,295 @@ fun HomeScreen(
                     title = "Coming Soon",
                     movies = comingSoonMovies,
                     isLoading = isComingSoonLoading,
-                    onMovieClick = { movie -> onNavigateToMovieDetail(movie.id) },
+                    onMovieClick = { onNavigateToMovieDetail(it.id) },
+                    onSeeAllClick = { /* Navigate to full coming soon list */ },
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun FeaturedMovieBanner(
+    movies: List<MovieModel>,
+    onMovieClick: (MovieModel) -> Unit
+) {
+    val pagerState = rememberPagerState { movies.size }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+        ) {
+            if (movies.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.LightGray.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No featured movies",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = if (isSystemInDarkTheme()) TextSecondaryDark else TextSecondaryLight
+                    )
+                }
+            } else {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize()
+                ) { page ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable { onMovieClick(movies[page]) }
+                    ) {
+                        // Backdrop Image
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(movies[page].backdropUrl)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+
+                        // Gradient Overlay
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            Color.Black.copy(alpha = 0.8f)
+                                        ),
+                                        startY = 0f,
+                                        endY = 500f
+                                    )
+                                )
+                        )
+
+                        // Movie Info
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = movies[page].title,
+                                style = MaterialTheme.typography.titleLarge,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            // Genre and Duration
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (movies[page].genres.isNotEmpty()) {
+                                    Text(
+                                        text = movies[page].genres.joinToString(", ").take(20),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.White.copy(alpha = 0.8f)
+                                    )
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    Box(
+                                        modifier = Modifier
+                                            .size(4.dp)
+                                            .background(Color.White.copy(alpha = 0.5f), CircleShape)
+                                    )
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                }
+
+                                Text(
+                                    text = "${movies[page].duration} min",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Indicators
+                Row(
+                    Modifier
+                        .height(16.dp)
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    repeat(movies.size) { iteration ->
+                        val color = if (pagerState.currentPage == iteration) PrimaryColor else Color.White.copy(alpha = 0.5f)
+                        Box(
+                            modifier = Modifier
+                                .padding(2.dp)
+                                .clip(CircleShape)
+                                .background(color)
+                                .size(8.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // Auto-scroll effect
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(3000)
+            if (movies.isNotEmpty()) {
+                pagerState.animateScrollToPage((pagerState.currentPage + 1) % movies.size)
+            }
+        }
+    }
+}
+
+@Composable
+fun QuickAccessCard(
+    onBookingsClick: () -> Unit,
+    onProfileClick: () -> Unit
+) {
+    val isDarkTheme = isSystemInDarkTheme()
+    val cardBackgroundColor = if (isDarkTheme) SurfaceDark else SurfaceLight
+    val textPrimaryColor = if (isDarkTheme) TextPrimaryDark else TextPrimaryLight
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = cardBackgroundColor
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Quick Access",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = textPrimaryColor
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                // My Bookings
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onBookingsClick)
+                        .padding(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(PrimaryColor.copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_ticket),
+                            contentDescription = "My Bookings",
+                            tint = PrimaryColor,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "My Bookings",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        color = textPrimaryColor
+                    )
+                }
+
+                // My Profile
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onProfileClick)
+                        .padding(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(PrimaryColor.copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "My Profile",
+                            tint = PrimaryColor,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "My Profile",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        color = textPrimaryColor
+                    )
+                }
+
+                // Find Cinemas
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { }
+                        .padding(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(PrimaryColor.copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Find Cinemas",
+                            tint = PrimaryColor,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Cinemas",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        color = textPrimaryColor
+                    )
+                }
             }
         }
     }

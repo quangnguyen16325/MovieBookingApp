@@ -1,5 +1,6 @@
 package com.example.moviebooking.ui.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.moviebooking.data.model.MovieModel
@@ -38,22 +39,51 @@ class HomeViewModel : ViewModel() {
         loadComingSoonMovies()
     }
 
+//    fun loadNowShowingMovies() {
+//        viewModelScope.launch {
+//            _isNowShowingLoading.value = true
+//            _errorMessage.value = null
+//
+//            try {
+//                movieRepository.getNowShowingMovies()
+//                    .catch { e ->
+//                        _errorMessage.value = e.message ?: "Failed to load Now Showing movies"
+//                        _isNowShowingLoading.value = false
+//                    }
+//                    .collectLatest { movies ->
+//                        _nowShowingMovies.value = movies
+//                        _isNowShowingLoading.value = false
+//                    }
+//            } catch (e: Exception) {
+//                _errorMessage.value = e.message ?: "An unexpected error occurred"
+//                _isNowShowingLoading.value = false
+//            }
+//        }
+//    }
     fun loadNowShowingMovies() {
         viewModelScope.launch {
             _isNowShowingLoading.value = true
             _errorMessage.value = null
 
+            Log.d("HomeViewModel", "Starting to load now showing movies")
+
             try {
                 movieRepository.getNowShowingMovies()
                     .catch { e ->
+                        Log.e("HomeViewModel", "Error loading now showing movies: ${e.message}", e)
                         _errorMessage.value = e.message ?: "Failed to load Now Showing movies"
                         _isNowShowingLoading.value = false
                     }
                     .collectLatest { movies ->
+                        Log.d("HomeViewModel", "Loaded now showing movies: ${movies.size}")
+                        for (movie in movies) {
+                            Log.d("HomeViewModel", "Movie: ${movie.title}, isNowShowing: ${movie.isNowShowing}")
+                        }
                         _nowShowingMovies.value = movies
                         _isNowShowingLoading.value = false
                     }
             } catch (e: Exception) {
+                Log.e("HomeViewModel", "Exception in loadNowShowingMovies: ${e.message}", e)
                 _errorMessage.value = e.message ?: "An unexpected error occurred"
                 _isNowShowingLoading.value = false
             }

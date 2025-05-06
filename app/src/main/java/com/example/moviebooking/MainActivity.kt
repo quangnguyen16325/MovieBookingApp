@@ -1,6 +1,7 @@
 package com.example.moviebooking
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -25,6 +26,7 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
@@ -64,6 +66,7 @@ import com.example.moviebooking.ui.theme.MovieBookingTheme
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import coil.request.CachePolicy
+import com.google.firebase.firestore.FirebaseFirestore
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -263,6 +266,10 @@ fun MovieBookingApp() {
                     }
                 )
 
+//                Button(onClick = { addSampleMovies() }) {
+//                    Text("Add Sample Movies")
+//                }
+
                 Spacer(modifier = Modifier.weight(1f))
 
                 Divider()
@@ -377,4 +384,57 @@ fun DrawerItem(
             color = contentColor
         )
     }
+}
+
+fun addSampleMovies() {
+    val firestore = FirebaseFirestore.getInstance()
+
+    // Phim đang chiếu
+    val nowShowingMovie = hashMapOf(
+        "title" to "Avengers: Endgame",
+        "overview" to "After the devastating events of Avengers: Infinity War, the universe is in ruins...",
+        "posterUrl" to "https://m.media-amazon.com/images/M/MV5BMTc5MDE2ODcwNV5BMl5BanBnXkFtZTgwMzI2NzQ2NzM@._V1_.jpg",
+        "backdropUrl" to "https://images.hdqwalls.com/wallpapers/avengers-endgame-2019-movie-poster-y7.jpg",
+        "duration" to 181,
+        "genres" to listOf("Action", "Adventure", "Sci-Fi"),
+        "rating" to 8.4,
+        "cast" to listOf("Robert Downey Jr.", "Chris Evans", "Mark Ruffalo"),
+        "director" to "Russo Brothers",
+        "trailerUrl" to "https://www.youtube.com/watch?v=TcMBFSGVi1c",
+        "isNowShowing" to true,
+        "isComingSoon" to false
+    )
+
+    // Phim sắp chiếu
+    val comingSoonMovie = hashMapOf(
+        "title" to "Deadpool 3",
+        "overview" to "The Merc with a Mouth teams up with Wolverine in this highly anticipated sequel...",
+        "posterUrl" to "https://m.media-amazon.com/images/M/MV5BMGI1ZTFmY2YtZGYxNi00MjM0LTlhZDYtMzVlODllYTRjOTc1XkEyXkFqcGdeQXVyMDM2NDM2MQ@@._V1_.jpg",
+        "backdropUrl" to "https://i0.wp.com/thefutureoftheforce.com/wp-content/uploads/2022/09/deadpool-wolverine.jpg",
+        "duration" to 120,
+        "genres" to listOf("Action", "Comedy", "Adventure"),
+        "rating" to 9.0,
+        "cast" to listOf("Ryan Reynolds", "Hugh Jackman", "Emma Corrin"),
+        "director" to "Shawn Levy",
+        "trailerUrl" to "https://www.youtube.com/watch?v=LKCkDp_QBTE",
+        "isNowShowing" to false,
+        "isComingSoon" to true
+    )
+
+    // Thêm phim vào Firestore
+    firestore.collection("movies").add(nowShowingMovie)
+        .addOnSuccessListener { documentReference ->
+            Log.d("Firebase", "Added now showing movie with ID: ${documentReference.id}")
+        }
+        .addOnFailureListener { e ->
+            Log.e("Firebase", "Error adding now showing movie", e)
+        }
+
+    firestore.collection("movies").add(comingSoonMovie)
+        .addOnSuccessListener { documentReference ->
+            Log.d("Firebase", "Added coming soon movie with ID: ${documentReference.id}")
+        }
+        .addOnFailureListener { e ->
+            Log.e("Firebase", "Error adding coming soon movie", e)
+        }
 }
