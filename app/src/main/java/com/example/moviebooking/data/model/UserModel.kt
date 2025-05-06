@@ -7,8 +7,8 @@ data class UserModel(
     @DocumentId val uid: String = "",
     val email: String = "",
     val fullName: String = "",
-    val profileImage: String = "",
-    val phoneNumber: String = "",
+    val profileImage: String? = null,
+    val phoneNumber: String? = null,
     val createdAt: Timestamp? = null,
     val lastLogin: Timestamp? = null
 ) {

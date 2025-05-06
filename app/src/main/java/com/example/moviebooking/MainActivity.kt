@@ -1,33 +1,71 @@
 package com.example.moviebooking
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ConfirmationNumber
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Divider
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.example.moviebooking.ui.theme.MovieBookingTheme
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.example.moviebooking.ui.auth.AuthViewModel
 import com.example.moviebooking.ui.navigation.AppNavigation
-import com.facebook.CallbackManager
-import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.example.moviebooking.ui.navigation.Screen
+import com.example.moviebooking.ui.theme.MovieBookingTheme
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import coil.request.CachePolicy
 
 class MainActivity : ComponentActivity() {
-
-    private val authViewModel: AuthViewModel by viewModels()
-
-    // Google Sign In launcher
-    private val googleSignInLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        authViewModel.handleGoogleSignInResult(task)
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -36,22 +74,307 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavigation(
-                        startGoogleSignIn = { launchGoogleSignIn() },
-                        startFacebookSignIn = { authViewModel.startFacebookSignIn(this) }
-                    )
+                    MovieBookingApp()
                 }
             }
         }
     }
+}
 
-    private fun launchGoogleSignIn() {
-        val signInIntent = authViewModel.getGoogleSignInIntent(this)
-        googleSignInLauncher.launch(signInIntent)
+@Composable
+fun MovieBookingApp() {
+    val authViewModel: AuthViewModel = viewModel()
+    val currentUser by authViewModel.currentUser.collectAsState()
+
+    val userState by authViewModel.currentUser.collectAsState()
+    val profileImage = userState?.profileImage
+
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+
+    val navController = rememberNavController()
+
+    // Variable to track which screen we're on
+    var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                // Drawer Header with logo and user info
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .padding(24.dp)
+                ) {
+                    Column {
+                        // App Logo
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+//                            Icon(
+//                                imageVector = Icons.Default.ConfirmationNumber,
+//                                contentDescription = null,
+//                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+//                                modifier = Modifier.size(40.dp)
+//                            )
+                            Image(
+                                painter = painterResource(id = R.drawable.cineai_1),
+                                contentDescription = "App Logo",
+                                modifier = Modifier.size(40.dp)
+                            )
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            Text(
+                                text = "Cine AI",
+                                style = MaterialTheme.typography.headlineMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // User Information
+                        if (currentUser != null) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // User profile picture
+                                if (profileImage.isNullOrEmpty()) {
+                                    // Fallback khi không có ảnh đại diện
+                                    Box(
+                                        modifier = Modifier
+                                            .size(64.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.primaryContainer),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.AccountCircle,
+                                            contentDescription = "Profile Picture",
+                                            modifier = Modifier.size(48.dp),
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    }
+                                } else {
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(LocalContext.current)
+                                            .data(profileImage)
+                                            .crossfade(true)
+                                            .placeholder(R.drawable.ic_default_user)
+                                            .error(R.drawable.ic_default_user)
+                                            .diskCachePolicy(CachePolicy.ENABLED)
+                                            .memoryCachePolicy(CachePolicy.ENABLED)
+                                            .build(),
+                                        contentDescription = "Profile Picture",
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clip(CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Column {
+                                    Text(
+                                        text = currentUser?.fullName ?: "Guest User",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        fontWeight = FontWeight.Bold
+                                    )
+
+                                    Text(
+                                        text = currentUser?.email ?: "",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                    )
+                                }
+                            }
+                        } else {
+                            Text(
+                                text = "Guest User",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Drawer Items
+                DrawerItem(
+                    icon = Icons.Default.Home,
+                    label = "Home",
+                    isSelected = currentScreen == Screen.Home,
+                    onClick = {
+                        navigateToScreen(navController, Screen.Home.route, scope) {
+                            drawerState.close()
+                        }
+                    }
+                )
+
+                DrawerItem(
+                    icon = Icons.Default.ConfirmationNumber,
+                    label = "My Bookings",
+                    isSelected = currentScreen == Screen.Bookings,
+                    onClick = {
+                        navigateToScreen(navController, Screen.Bookings.route, scope) {
+                            drawerState.close()
+                        }
+                    }
+                )
+
+                DrawerItem(
+                    icon = Icons.Default.AccountCircle,
+                    label = "Profile",
+                    isSelected = currentScreen == Screen.Profile,
+                    onClick = {
+                        navigateToScreen(navController, Screen.Profile.route, scope) {
+                            drawerState.close()
+                        }
+                    }
+                )
+
+                DrawerItem(
+                    icon = Icons.Default.Settings,
+                    label = "Settings",
+                    isSelected = false,
+                    onClick = {
+                        // TODO: Implement settings screen
+                        scope.launch {
+                            drawerState.close()
+                        }
+                    }
+                )
+
+                DrawerItem(
+                    icon = Icons.Default.Info,
+                    label = "About",
+                    isSelected = currentScreen == Screen.About,
+                    onClick = {
+                        navigateToScreen(navController, Screen.About.route, scope) {
+                            drawerState.close()
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Divider()
+
+                // Logout Button
+                if (currentUser != null) {
+                    DrawerItem(
+                        icon = Icons.Default.ExitToApp,
+                        label = "Logout",
+                        isSelected = false,
+                        onClick = {
+                            scope.launch {
+                                authViewModel.logout()
+                                drawerState.close()
+                                // Navigate to login screen
+                                navController.navigate(Screen.Login.route) {
+                                    popUpTo(navController.graph.id) {
+                                        inclusive = true
+                                    }
+                                }
+                            }
+                        },
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        },
+        content = {
+            AppNavigation(
+                navController = navController,
+                startGoogleSignIn = { /* Implement Google Sign-In */ },
+                startFacebookSignIn = { /* Implement Facebook Sign-In */ },
+                authViewModel = authViewModel,
+                onNavigationIconClick = {
+                    scope.launch {
+                        drawerState.open()
+                    }
+                },
+                onScreenChange = { screen ->
+                    currentScreen = screen
+                }
+            )
+        }
+    )
+}
+
+// Helper function to navigate to a screen and run an optional action afterwards
+private fun navigateToScreen(
+    navController: NavHostController,
+    route: String,
+    scope: kotlinx.coroutines.CoroutineScope,
+    afterNavigate: suspend () -> Unit
+) {
+    scope.launch {
+        navController.navigate(route) {
+            // Pop up to the start destination of the graph to avoid building up
+            // a large stack of destinations on the back stack
+            popUpTo(navController.graph.startDestinationId) {
+                saveState = true
+            }
+            // Avoid multiple copies of the same destination
+            launchSingleTop = true
+            // Restore state when navigating back to a previously visited screen
+            restoreState = true
+        }
+        afterNavigate()
+    }
+}
+
+@Composable
+fun DrawerItem(
+    icon: ImageVector,
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    tint: Color = MaterialTheme.colorScheme.onSurface
+) {
+    val backgroundColor = if (isSelected) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        Color.Transparent
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        authViewModel.handleActivityResult(requestCode, resultCode, data)
+    val contentColor = if (isSelected) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        tint
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(backgroundColor)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = contentColor,
+            modifier = Modifier.size(24.dp)
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleMedium,
+            color = contentColor
+        )
     }
 }

@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -121,7 +120,7 @@ fun LoginScreen(
                 // Top section - Logo and App name
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(0.3f)
+                    modifier = Modifier.weight(0.35f)
                 ) {
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -137,20 +136,19 @@ fun LoginScreen(
                         textAlign = TextAlign.Center,
                     )
 
-
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     Image(
                         painter = painterResource(id = R.drawable.cineai_1),
                         contentDescription = "App Logo",
-                        modifier = Modifier.size(150.dp)  // Reduced size
+                        modifier = Modifier.size(220.dp)
                     )
                 }
 
                 // Middle section - Login form
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(0.5f)
+                    modifier = Modifier.weight(0.4f)
                 ) {
                     SubheadingText(
                         text = "Login to your account",
@@ -248,7 +246,7 @@ fun LoginScreen(
                 // Bottom section - Social login and register link
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(0.4f)
+                    modifier = Modifier.weight(0.25f) // Giảm trọng số cho phần dưới để tạo thêm không gian cho logo
                 ) {
                     SocialLoginDivider()
 

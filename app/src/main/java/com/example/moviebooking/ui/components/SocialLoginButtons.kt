@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -105,20 +106,12 @@ fun SocialLoginDivider() {
             .fillMaxWidth()
             .padding(vertical = 12.dp) // Reduced vertical padding
     ) {
-        DividerLine(Modifier.weight(1f))
+        HorizontalDivider(Modifier.weight(1f))
         Text(
             text = "OR",
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             modifier = Modifier.padding(horizontal = 16.dp)
         )
-        DividerLine(Modifier.weight(1f))
+        HorizontalDivider(Modifier.weight(1f))
     }
-}
-
-@Composable
-private fun DividerLine(modifier: Modifier = Modifier) {
-    androidx.compose.material3.Divider(
-        modifier = modifier,
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
-    )
 }

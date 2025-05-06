@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.gms.google.services)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
 
 android {
@@ -76,7 +78,7 @@ dependencies {
     implementation(libs.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.coil.compose)
-    implementation(libs.firebase.bom)
+    implementation(platform(libs.firebase.bom))
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.play.services)
@@ -85,4 +87,14 @@ dependencies {
     implementation(libs.play.services.auth)
     // Facebook Sign In
     implementation(libs.facebook.login)
+
+    // Hilt
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    // Swipe to refresh
+    implementation(libs.accompanist.swiperefresh)
+
+    implementation(libs.androidx.material.icons.extended.v170)
 }

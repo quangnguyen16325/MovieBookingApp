@@ -6,21 +6,22 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -31,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,12 +39,12 @@ import com.example.moviebooking.ui.components.MovieButton
 import com.example.moviebooking.ui.components.MovieTextField
 import com.example.moviebooking.util.Utils
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForgotPasswordScreen(
     viewModel: AuthViewModel,
     onBackToLogin: () -> Unit
 ) {
-    val scrollState = rememberScrollState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val isLoading by viewModel.isLoading.collectAsState()
@@ -71,7 +71,17 @@ fun ForgotPasswordScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Forgot Password") },
+                navigationIcon = {
+                    IconButton(onClick = onBackToLogin) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
     ) { padding ->
         Box(
             modifier = Modifier
@@ -81,16 +91,16 @@ fun ForgotPasswordScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp)
-                    .verticalScroll(scrollState),
+                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Image(
-                    imageVector = Icons.Default.Lock,
-                    contentDescription = "Reset Password",
-                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
-                    modifier = Modifier.size(80.dp)
+                // Email icon
+                Icon(
+                    imageVector = Icons.Default.Email,
+                    contentDescription = "Email",
+                    modifier = Modifier.size(80.dp),
+                    tint = MaterialTheme.colorScheme.primary
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -104,7 +114,7 @@ fun ForgotPasswordScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Enter your email address and we'll send you instructions to reset your password.",
+                    text = "Enter the email address associated with your account, and we'll send you a link to reset your password.",
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center
                 )
@@ -115,41 +125,31 @@ fun ForgotPasswordScreen(
                     value = email,
                     onValueChange = {
                         email = it
-                        emailError = ""
+                        emailError = if (it.isEmpty()) "" else if (!Utils.isValidEmail(it)) "Invalid email format" else ""
                     },
                     label = "Email",
                     leadingIcon = Icons.Default.Email,
                     keyboardType = KeyboardType.Email,
-                    imeAction = ImeAction.Done,
                     isError = emailError.isNotEmpty(),
                     errorMessage = emailError
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
                 MovieButton(
+                    text = "Send Reset Link",
                     onClick = {
-                        when {
-                            email.isEmpty() -> {
-                                emailError = "Email is required"
-                            }
-                            !Utils.isValidEmail(email) -> {
-                                emailError = "Enter a valid email"
-                            }
-                            else -> {
-                                viewModel.resetPassword(email)
-                            }
+                        if (email.isEmpty()) {
+                            emailError = "Email is required"
+                        } else if (!Utils.isValidEmail(email)) {
+                            emailError = "Invalid email format"
+                        } else {
+                            viewModel.resetPassword(email)
                         }
                     },
-                    text = "Send Reset Instructions",
-                    isLoading = isLoading
+                    isLoading = isLoading,
+                    modifier = Modifier.fillMaxWidth()
                 )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                TextButton(onClick = onBackToLogin) {
-                    Text("Back to Login")
-                }
             }
         }
     }

@@ -17,8 +17,10 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.AuthCredential
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.userProfileChangeRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -263,4 +265,73 @@ class AuthRepository {
             continuation.resume(Result.failure(e))
         }
     }
+
+    // Thêm phương thức này vào AuthRepository
+    suspend fun getUserProfile(userId: String): Result<UserModel> = withContext(Dispatchers.IO) {
+        try {
+            val userDoc = firestore.collection("users").document(userId).get().await()
+
+            if (userDoc.exists()) {
+                val userModel = userDoc.toObject(UserModel::class.java)
+                    ?: return@withContext Result.failure(Exception("Failed to parse user data"))
+
+                return@withContext Result.success(userModel)
+            } else {
+                return@withContext Result.failure(Exception("User not found"))
+            }
+        } catch (e: Exception) {
+            return@withContext Result.failure(e)
+        }
+    }
+
+    suspend fun updateUserProfile(userModel: UserModel): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val currentUser = currentUser
+            val userMap = hashMapOf<String, Any>(
+                "fullName" to userModel.fullName,
+                "phoneNumber" to (userModel.phoneNumber ?: "")
+            )
+
+            if (currentUser == null) {
+                return@withContext Result.failure(Exception("User not authenticated"))
+            }
+
+            // Update Firestore document
+            firestore.collection("users").document(currentUser.uid).update(userMap).await()
+
+            // Update display name in Firebase Auth
+            val profileUpdates = userProfileChangeRequest {
+                displayName = userModel.fullName
+            }
+            currentUser.updateProfile(profileUpdates).await()
+
+            return@withContext Result.success(Unit)
+        } catch (e: Exception) {
+            return@withContext Result.failure(e)
+        }
+    }
+
+    suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val user = currentUser ?: return@withContext Result.failure(Exception("User not authenticated"))
+            val email = user.email ?: return@withContext Result.failure(Exception("User email not available"))
+
+            // Re-authenticate the user
+            val credential = EmailAuthProvider.getCredential(email, currentPassword)
+
+            try {
+                user.reauthenticate(credential).await()
+            } catch (e: Exception) {
+                return@withContext Result.failure(Exception("Current password is incorrect"))
+            }
+
+            // Change the password
+            user.updatePassword(newPassword).await()
+
+            return@withContext Result.success(Unit)
+        } catch (e: Exception) {
+            return@withContext Result.failure(e)
+        }
+    }
+
 }
