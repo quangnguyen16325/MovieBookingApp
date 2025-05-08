@@ -68,15 +68,7 @@ import com.example.moviebooking.data.model.MovieModel
 import com.example.moviebooking.ui.auth.AuthViewModel
 import com.example.moviebooking.ui.components.MovieCarousel
 import kotlinx.coroutines.delay
-import com.example.moviebooking.ui.theme.BackgroundDark
-import com.example.moviebooking.ui.theme.BackgroundLight
-import com.example.moviebooking.ui.theme.PrimaryColor
-import com.example.moviebooking.ui.theme.SurfaceDark
-import com.example.moviebooking.ui.theme.SurfaceLight
-import com.example.moviebooking.ui.theme.TextPrimaryDark
-import com.example.moviebooking.ui.theme.TextPrimaryLight
-import com.example.moviebooking.ui.theme.TextSecondaryDark
-import com.example.moviebooking.ui.theme.TextSecondaryLight
+import com.example.moviebooking.ui.theme.*
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
@@ -95,8 +87,10 @@ fun HomeScreen(
     homeViewModel: HomeViewModel = viewModel()
 ) {
     val isDarkTheme = isSystemInDarkTheme()
-    val backgroundColor = if (isDarkTheme) BackgroundDark else BackgroundLight
-    val textPrimaryColor = if (isDarkTheme) TextPrimaryDark else TextPrimaryLight
+    val backgroundColor = if (!isDarkTheme) DarkNavy else BackgroundLight
+    val surfaceColor = if (!isDarkTheme) DarkNavyLight else SurfaceLight
+    val textPrimaryColor = if (!isDarkTheme) Color.White else TextPrimaryLight
+    val textSecondaryColor = if (!isDarkTheme) Color.White.copy(alpha = 0.7f) else TextSecondaryLight
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -127,21 +121,23 @@ fun HomeScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = DarkNavy,
         topBar = {
             TopAppBar(
                 title = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-//                        Text(
-//                            text = "Cine AI",
-//                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-//                            color = textPrimaryColor
+//                        Image(
+//                            painter = painterResource(id = R.drawable.cineai_1),
+//                            contentDescription = "Cine AI",
+//                            modifier = Modifier.height(32.dp)
 //                        )
-                        Image(
-                            painter = painterResource(id = R.drawable.cineai_1),
-                            contentDescription = "Lotte Cinema",
-                            modifier = Modifier.height(32.dp)
+                        Text(
+                            text = "CINE AI",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = AccentColor
                         )
                     }
                 },
@@ -150,7 +146,7 @@ fun HomeScreen(
                         Icon(
                             imageVector = Icons.Default.Menu,
                             contentDescription = "Menu",
-                            tint = PrimaryColor
+                            tint = AccentColor
                         )
                     }
                 },
@@ -159,14 +155,14 @@ fun HomeScreen(
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Search",
-                            tint = PrimaryColor
+                            tint = AccentColor
                         )
                     }
                     IconButton(onClick = onNavigateToNotifications) {
                         Icon(
                             imageVector = Icons.Default.Notifications,
                             contentDescription = "Notifications",
-                            tint = PrimaryColor
+                            tint = AccentColor
                         )
                     }
                     IconButton(onClick = onNavigateToProfile) {
@@ -178,7 +174,7 @@ fun HomeScreen(
                                 imageVector = Icons.Default.AccountCircle,
                                 contentDescription = "Profile",
                                 modifier = Modifier.size(32.dp),
-                                tint = PrimaryColor
+                                tint = AccentColor
                             )
                         } else {
                             AsyncImage(
@@ -198,7 +194,7 @@ fun HomeScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = if (isDarkTheme) SurfaceDark else SurfaceLight,
+                    containerColor = surfaceColor,
                     titleContentColor = textPrimaryColor,
                     actionIconContentColor = textPrimaryColor
                 )
@@ -213,7 +209,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .background(backgroundColor)
+                    .background(DarkNavy)
                     .verticalScroll(rememberScrollState())
             ) {
                 // Featured Slider / Carousel
@@ -231,7 +227,7 @@ fun HomeScreen(
                     Text(
                         text = "Welcome back,",
                         style = MaterialTheme.typography.bodyLarge.copy(
-                            color = if (isDarkTheme) TextSecondaryDark else TextSecondaryLight
+                            color = textSecondaryColor
                         )
                     )
                     Text(
@@ -334,7 +330,7 @@ fun FeaturedMovieBanner(
                                     brush = Brush.verticalGradient(
                                         colors = listOf(
                                             Color.Transparent,
-                                            Color.Black.copy(alpha = 0.8f)
+                                            DarkNavy.copy(alpha = 0.8f)
                                         ),
                                         startY = 0f,
                                         endY = 500f
@@ -397,7 +393,7 @@ fun FeaturedMovieBanner(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     repeat(movies.size) { iteration ->
-                        val color = if (pagerState.currentPage == iteration) PrimaryColor else Color.White.copy(alpha = 0.5f)
+                        val color = if (pagerState.currentPage == iteration) AccentColor else Color.White.copy(alpha = 0.5f)
                         Box(
                             modifier = Modifier
                                 .padding(2.dp)
@@ -428,8 +424,8 @@ fun QuickAccessCard(
     onProfileClick: () -> Unit
 ) {
     val isDarkTheme = isSystemInDarkTheme()
-    val cardBackgroundColor = if (isDarkTheme) SurfaceDark else SurfaceLight
-    val textPrimaryColor = if (isDarkTheme) TextPrimaryDark else TextPrimaryLight
+    val cardBackgroundColor = if (!isDarkTheme) DarkNavyLight else SurfaceLight
+    val textPrimaryColor = if (!isDarkTheme) Color.White else TextPrimaryLight
 
     Card(
         modifier = Modifier
@@ -469,13 +465,13 @@ fun QuickAccessCard(
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(PrimaryColor.copy(alpha = 0.1f)),
+                            .background(AccentColor.copy(alpha = 0.1f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_ticket),
                             contentDescription = "My Bookings",
-                            tint = PrimaryColor,
+                            tint = AccentColor,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -503,13 +499,13 @@ fun QuickAccessCard(
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(PrimaryColor.copy(alpha = 0.1f)),
+                            .background(AccentColor.copy(alpha = 0.1f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = "My Profile",
-                            tint = PrimaryColor,
+                            tint = AccentColor,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -537,13 +533,13 @@ fun QuickAccessCard(
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(PrimaryColor.copy(alpha = 0.1f)),
+                            .background(AccentColor.copy(alpha = 0.1f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.LocationOn,
                             contentDescription = "Find Cinemas",
-                            tint = PrimaryColor,
+                            tint = AccentColor,
                             modifier = Modifier.size(24.dp)
                         )
                     }

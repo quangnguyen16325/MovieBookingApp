@@ -46,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -66,6 +67,9 @@ import com.example.moviebooking.ui.theme.MovieBookingTheme
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import coil.request.CachePolicy
+import com.example.moviebooking.ui.theme.AccentColor
+import com.example.moviebooking.ui.theme.DarkNavy
+import com.example.moviebooking.ui.theme.DarkNavyLight
 import com.google.firebase.firestore.FirebaseFirestore
 
 class MainActivity : ComponentActivity() {
@@ -103,12 +107,22 @@ fun MovieBookingApp() {
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet {
+            ModalDrawerSheet(
+                drawerContainerColor = DarkNavy,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 // Drawer Header with logo and user info
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    DarkNavyLight.copy(alpha = 0.7f),
+                                    DarkNavyLight.copy(alpha = 0.9f)
+                                )
+                            )
+                        )
                         .padding(24.dp)
                 ) {
                     Column {
@@ -218,7 +232,8 @@ fun MovieBookingApp() {
                         navigateToScreen(navController, Screen.Home.route, scope) {
                             drawerState.close()
                         }
-                    }
+                    },
+                    tint = Color.White
                 )
 
                 DrawerItem(
@@ -229,7 +244,8 @@ fun MovieBookingApp() {
                         navigateToScreen(navController, Screen.Bookings.route, scope) {
                             drawerState.close()
                         }
-                    }
+                    },
+                    tint = Color.White
                 )
 
                 DrawerItem(
@@ -240,7 +256,8 @@ fun MovieBookingApp() {
                         navigateToScreen(navController, Screen.Profile.route, scope) {
                             drawerState.close()
                         }
-                    }
+                    },
+                    tint = Color.White
                 )
 
                 DrawerItem(
@@ -252,7 +269,8 @@ fun MovieBookingApp() {
                         scope.launch {
                             drawerState.close()
                         }
-                    }
+                    },
+                    tint = Color.White
                 )
 
                 DrawerItem(
@@ -263,7 +281,8 @@ fun MovieBookingApp() {
                         navigateToScreen(navController, Screen.About.route, scope) {
                             drawerState.close()
                         }
-                    }
+                    },
+                    tint = Color.White
                 )
 
 //                Button(onClick = { addSampleMovies() }) {
@@ -272,7 +291,7 @@ fun MovieBookingApp() {
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                Divider()
+                Divider(color = Color.White.copy(alpha = 0.2f))
 
                 // Logout Button
                 if (currentUser != null) {
@@ -347,16 +366,16 @@ fun DrawerItem(
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit,
-    tint: Color = MaterialTheme.colorScheme.onSurface
+    tint: Color = Color.White
 ) {
     val backgroundColor = if (isSelected) {
-        MaterialTheme.colorScheme.primaryContainer
+        AccentColor.copy(alpha = 0.2f)
     } else {
         Color.Transparent
     }
 
     val contentColor = if (isSelected) {
-        MaterialTheme.colorScheme.primary
+        AccentColor
     } else {
         tint
     }

@@ -86,7 +86,8 @@ fun AppNavigation(
             RegisterScreen(
                 viewModel = authViewModel,
                 onNavigateToLogin = actions.navigateToLogin,
-                onNavigateToHome = actions.navigateToHome
+                onNavigateToHome = actions.navigateToHome,
+                onNavigateToEmailVerification = actions.navigateToEmailVerification
             )
         }
 

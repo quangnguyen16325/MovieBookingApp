@@ -17,6 +17,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,7 +40,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.moviebooking.ui.theme.AccentColor
+import com.example.moviebooking.ui.theme.DarkNavyLight
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovieTextField(
     value: String,
@@ -55,25 +58,31 @@ fun MovieTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
-        leadingIcon = leadingIcon?.let { { Icon(it, contentDescription = null) } },
+        label = { Text(label, color = Color.White.copy(alpha = 0.7f)) },
+        leadingIcon = leadingIcon?.let { { Icon(it, contentDescription = null, tint = AccentColor) } },
         keyboardOptions = KeyboardOptions(
             keyboardType = keyboardType,
             imeAction = imeAction
         ),
         isError = isError,
-        supportingText = if (isError) { { Text(errorMessage) } } else null,
+        supportingText = if (isError) { { Text(errorMessage, color = MaterialTheme.colorScheme.error) } } else null,
         singleLine = true,
-        shape = RoundedCornerShape(8.dp),
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surface,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            disabledContainerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(12.dp),
+        colors = TextFieldDefaults.outlinedTextFieldColors(
+            containerColor = Color.Black.copy(alpha = 0.7f),
+            cursorColor = AccentColor,
+            focusedBorderColor = AccentColor,
+            unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+            focusedLabelColor = AccentColor,
+            unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.White
         ),
         modifier = modifier.fillMaxWidth()
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PasswordTextField(
     value: String,
@@ -89,12 +98,16 @@ fun PasswordTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
-        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+        label = { Text(label, color = Color.White.copy(alpha = 0.7f)) },
+        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = AccentColor) },
         trailingIcon = {
-            val icon = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility
+            val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
             IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                Icon(icon, contentDescription = if (passwordVisible) "Hide password" else "Show password")
+                Icon(
+                    icon,
+                    contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                    tint = Color.White.copy(alpha = 0.7f)
+                )
             }
         },
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -103,13 +116,18 @@ fun PasswordTextField(
             imeAction = imeAction
         ),
         isError = isError,
-        supportingText = if (isError) { { Text(errorMessage) } } else null,
+        supportingText = if (isError) { { Text(errorMessage, color = MaterialTheme.colorScheme.error) } } else null,
         singleLine = true,
-        shape = RoundedCornerShape(8.dp),
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surface,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            disabledContainerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(12.dp),
+        colors = TextFieldDefaults.outlinedTextFieldColors(
+            containerColor = Color.Black.copy(alpha = 0.7f),
+            cursorColor = AccentColor,
+            focusedBorderColor = AccentColor,
+            unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+            focusedLabelColor = AccentColor,
+            unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.White
         ),
         modifier = modifier.fillMaxWidth()
     )
@@ -130,10 +148,10 @@ fun MovieButton(
             .height(50.dp)
             .fillMaxWidth(),
         enabled = enabled && !isLoading,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isPrimary) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = if (isPrimary) Color.White else MaterialTheme.colorScheme.onSecondaryContainer
+            containerColor = if (isPrimary) AccentColor else DarkNavyLight.copy(alpha = 0.7f),
+            contentColor = Color.White
         )
     ) {
         Box(
@@ -142,7 +160,7 @@ fun MovieButton(
             if (isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = if (isPrimary) Color.White else MaterialTheme.colorScheme.primary,
+                    color = Color.White,
                     strokeWidth = 2.dp
                 )
             } else {
@@ -156,14 +174,13 @@ fun MovieButton(
     }
 }
 
-// Đổi tên để tránh xung đột và làm rõ mục đích
 @Composable
 fun HorizontalDivider(
     modifier: Modifier = Modifier
 ) {
     Divider(
         modifier = modifier,
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+        color = Color.White.copy(alpha = 0.3f),
         thickness = 1.dp
     )
 }

@@ -50,6 +50,7 @@ import coil.request.ImageRequest
 import com.example.moviebooking.R
 import com.example.moviebooking.data.model.MovieModel
 import com.example.moviebooking.ui.theme.AccentColor
+import com.example.moviebooking.ui.theme.DarkNavyLight
 import com.example.moviebooking.ui.theme.ErrorColor
 import com.example.moviebooking.ui.theme.PrimaryColor
 import com.example.moviebooking.ui.theme.SurfaceDark
@@ -70,14 +71,14 @@ fun MovieCard(
     val isDarkTheme = isSystemInDarkTheme()
 
     // Sử dụng bảng màu ban đầu
-    val cardBackground = if (isDarkTheme) SurfaceDark else SurfaceLight
-    val textPrimaryColor = if (isDarkTheme) TextPrimaryDark else TextPrimaryLight
-    val textSecondaryColor = if (isDarkTheme) TextSecondaryDark else TextSecondaryLight
+    val cardBackground = if (!isDarkTheme) DarkNavyLight.copy(alpha = 0.7f) else SurfaceLight
+    val textPrimaryColor = if (!isDarkTheme) Color.White else TextPrimaryLight
+    val textSecondaryColor = if (!isDarkTheme) Color.White.copy(alpha = 0.7f) else TextSecondaryLight
 
     Card(
         modifier = modifier
             .width(160.dp)
-            .height(290.dp) // Tăng chiều cao để đồng bộ tốt hơn
+            .height(290.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(
@@ -154,7 +155,7 @@ fun MovieCard(
                             .align(Alignment.TopStart)
                             .padding(8.dp)
                             .clip(RoundedCornerShape(4.dp))
-                            .background(PrimaryColor)
+                            .background(AccentColor)
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
@@ -171,13 +172,13 @@ fun MovieCard(
                             .align(Alignment.TopStart)
                             .padding(8.dp)
                             .clip(RoundedCornerShape(4.dp))
-                            .background(AccentColor)
+                            .background(AccentColor.copy(alpha = 0.7f))
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
                             text = "COMING SOON",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color.Black,
+                            color = Color.White,
                             fontWeight = FontWeight.Bold,
                             fontSize = 8.sp
                         )
@@ -285,7 +286,8 @@ fun MovieCarousel(
     modifier: Modifier = Modifier
 ) {
     val isDarkTheme = isSystemInDarkTheme()
-    val textPrimaryColor = if (isDarkTheme) TextPrimaryDark else TextPrimaryLight
+    val textPrimaryColor = if (!isDarkTheme) Color.White else TextPrimaryLight
+    val textSecondaryColor = if (!isDarkTheme) Color.White.copy(alpha = 0.7f) else TextSecondaryLight
 
     Column(modifier = modifier.fillMaxWidth()) {
         // Header với title và nút See All
@@ -306,7 +308,7 @@ fun MovieCarousel(
             TextButton(
                 onClick = onSeeAllClick,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = PrimaryColor
+                    contentColor = AccentColor
                 )
             ) {
                 Text(
@@ -337,14 +339,14 @@ fun MovieCarousel(
                     Icon(
                         imageVector = Icons.Default.Movie,
                         contentDescription = null,
-                        tint = if (isDarkTheme) TextSecondaryDark else TextSecondaryLight,
+                        tint = if (!isDarkTheme) TextSecondaryDark else TextSecondaryLight,
                         modifier = Modifier.size(48.dp)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "No movies available",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = if (isDarkTheme) TextSecondaryDark else TextSecondaryLight
+                        color = if (!isDarkTheme) TextSecondaryDark else TextSecondaryLight
                     )
                 }
             }
@@ -363,5 +365,6 @@ fun MovieCarousel(
         }
     }
 }
+
 
 

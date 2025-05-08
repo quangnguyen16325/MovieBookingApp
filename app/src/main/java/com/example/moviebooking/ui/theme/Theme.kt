@@ -75,8 +75,12 @@ fun MovieBookingTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            window.statusBarColor = DarkNavy.toArgb()
+            window.navigationBarColor = DarkNavy.toArgb()
+//            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            // Đặt chữ/icons trên status bar và navigation bar thành màu sáng
+            WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
+            WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightNavigationBars = false
         }
     }
 

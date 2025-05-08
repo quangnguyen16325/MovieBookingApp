@@ -1,5 +1,6 @@
 package com.example.moviebooking.ui.movie
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -23,6 +24,7 @@ import java.util.Locale
 
 class MovieDetailViewModel(private val movieId: String) : ViewModel() {
 
+    private val TAG = "MovieDetailViewModel"
     private val movieRepository = MovieRepository()
     private val cinemaRepository = CinemaRepository()
     private val showtimeRepository = ShowtimeRepository()
@@ -108,15 +110,19 @@ class MovieDetailViewModel(private val movieId: String) : ViewModel() {
     private fun generateAvailableDates() {
         val dates = mutableListOf<Date>()
         val calendar = Calendar.getInstance()
+        val currentDate = calendar.time
 
         // Current date and next 6 days (1 week total)
         for (i in 0..6) {
-            dates.add(calendar.time)
+            // Chỉ thêm ngày nếu là ngày hiện tại hoặc tương lai
+            if (calendar.time >= currentDate) {
+                dates.add(calendar.time)
+            }
             calendar.add(Calendar.DAY_OF_MONTH, 1)
         }
 
         _availableDates.value = dates
-        _selectedDate.value = dates.first()
+        _selectedDate.value = dates.firstOrNull()
     }
 
     fun selectDate(date: Date) {
@@ -136,20 +142,66 @@ class MovieDetailViewModel(private val movieId: String) : ViewModel() {
         viewModelScope.launch {
             _isLoading.value = true
             try {
+                Log.d(TAG, "Loading showtimes for date: ${formatDate(date)} and cinema: ${cinema.id}")
+                
                 val showtimesFlow = showtimeRepository.getShowtimesForMovieAndDate(movieId, date)
                 showtimesFlow.catch { e ->
+                    Log.e(TAG, "Error loading showtimes: ${e.message}")
                     _errorMessage.value = e.message ?: "Failed to load showtimes"
                     _isLoading.value = false
                 }.collect { allShowtimes ->
-                    // Filter showtimes for selected cinema
-                    _showtimes.value = allShowtimes.filter { it.cinemaId == cinema.id }
+                    Log.d(TAG, "Total showtimes found: ${allShowtimes.size}")
+                    
+                    // Lọc và sắp xếp showtimes
+                    val filteredShowtimes = allShowtimes
+                        .filter { showtime ->
+                            val isValid = showtime.cinemaId == cinema.id &&
+                                    isShowtimeValid(showtime) &&
+                                    showtime.availableSeats > 0
+                            
+                            Log.d(TAG, "Showtime ${showtime.id} - " +
+                                    "cinemaId match: ${showtime.cinemaId == cinema.id}, " +
+                                    "isValid: ${isShowtimeValid(showtime)}, " +
+                                    "availableSeats: ${showtime.availableSeats}")
+                            
+                            isValid
+                        }
+                        .sortedBy { it.startTime?.toDate()?.time }
+
+                    Log.d(TAG, "Filtered showtimes: ${filteredShowtimes.size}")
+                    _showtimes.value = filteredShowtimes
                     _isLoading.value = false
                 }
             } catch (e: Exception) {
+                Log.e(TAG, "Exception loading showtimes: ${e.message}")
                 _errorMessage.value = e.message ?: "An unexpected error occurred"
                 _isLoading.value = false
             }
         }
+    }
+
+    private fun isShowtimeValid(showtime: ShowtimeModel): Boolean {
+        val now = Calendar.getInstance()
+        val showtimeDate = showtime.startTime?.toDate() ?: return false
+        
+        // Nếu là ngày hôm nay, kiểm tra thời gian
+        if (isToday(showtimeDate)) {
+            // Thêm 30 phút buffer để người dùng có thời gian đặt vé
+            now.add(Calendar.MINUTE, 30)
+            return showtimeDate.after(now.time)
+        }
+        
+        // Nếu là ngày khác, luôn hợp lệ
+        return true
+    }
+
+    private fun isToday(date: Date): Boolean {
+        val calendar1 = Calendar.getInstance()
+        val calendar2 = Calendar.getInstance()
+        calendar2.time = date
+        
+        return calendar1.get(Calendar.YEAR) == calendar2.get(Calendar.YEAR) &&
+               calendar1.get(Calendar.DAY_OF_YEAR) == calendar2.get(Calendar.DAY_OF_YEAR)
     }
 
     fun clearError() {

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,6 +34,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -44,6 +46,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -54,6 +57,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -69,6 +75,7 @@ import com.example.moviebooking.ui.auth.AuthViewModel
 import com.example.moviebooking.ui.components.MovieButton
 import com.example.moviebooking.ui.components.MovieTextField
 import com.example.moviebooking.ui.components.PasswordTextField
+import com.example.moviebooking.ui.theme.*
 
 @Composable
 fun ProfileScreenWrapper(
@@ -128,6 +135,21 @@ fun ProfileScreen(
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
+    // Define gradients
+    val backgroundGradient = Brush.verticalGradient(
+        colors = listOf(
+            Color.Black,
+            DarkNavy
+        )
+    )
+
+    val cardGradient = Brush.verticalGradient(
+        colors = listOf(
+            Color.Black.copy(alpha = 0.7f),
+            Color.Black.copy(alpha = 0.9f)
+        )
+    )
+
     // Initialize edit form with current values when profile is loaded
     LaunchedEffect(userProfile) {
         userProfile?.let {
@@ -154,21 +176,33 @@ fun ProfileScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("My Profile") },
+                title = { 
+                    Text(
+                        text = "My Profile",
+                        color = Color.White
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = Color.White
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent
+                )
             )
-        }
+        },
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(backgroundGradient)
                 .padding(paddingValues)
         ) {
             if (isLoading && userProfile == null) {
@@ -176,7 +210,7 @@ fun ProfileScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Loading profile...")
+                    CircularProgressIndicator(color = AccentColor)
                 }
             } else if (userProfile != null) {
                 Column(
@@ -208,16 +242,17 @@ fun ProfileScreen(
                                     contentDescription = "Profile Picture",
                                     modifier = Modifier
                                         .size(100.dp)
-                                        .clip(CircleShape),
+                                        .clip(CircleShape)
+                                        .shadow(8.dp, CircleShape),
                                     contentScale = ContentScale.Crop
                                 )
 
-                                // Edit Icon (decorative only)
+                                // Edit Icon
                                 Box(
                                     modifier = Modifier
                                         .size(32.dp)
                                         .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary)
+                                        .background(AccentColor)
                                         .align(Alignment.BottomEnd)
                                         .padding(4.dp),
                                     contentAlignment = Alignment.Center
@@ -237,7 +272,8 @@ fun ProfileScreen(
                             Text(
                                 text = userProfile?.fullName ?: "",
                                 style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
                             )
 
                             Spacer(modifier = Modifier.height(4.dp))
@@ -246,7 +282,7 @@ fun ProfileScreen(
                             Text(
                                 text = userProfile?.email ?: "",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                color = Color.White.copy(alpha = 0.7f)
                             )
                         }
                     }
@@ -255,47 +291,56 @@ fun ProfileScreen(
 
                     // Profile Info Card
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        shape = RoundedCornerShape(12.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .shadow(8.dp, RoundedCornerShape(12.dp)),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.Transparent
+                        )
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(cardGradient)
+                                .padding(16.dp)
                         ) {
-                            Text(
-                                text = "Account Information",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Column {
+                                Text(
+                                    text = "Account Information",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
 
-                            // Email
-                            ProfileInfoItem(
-                                icon = Icons.Default.Email,
-                                label = "Email",
-                                value = userProfile?.email ?: ""
-                            )
+                                // Email
+                                ProfileInfoItem(
+                                    icon = Icons.Default.Email,
+                                    label = "Email",
+                                    value = userProfile?.email ?: ""
+                                )
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(modifier = Modifier.height(12.dp))
 
-                            // Phone
-                            ProfileInfoItem(
-                                icon = Icons.Default.Phone,
-                                label = "Phone",
-                                value = userProfile?.phoneNumber ?: "Not set"
-                            )
+                                // Phone
+                                ProfileInfoItem(
+                                    icon = Icons.Default.Phone,
+                                    label = "Phone",
+                                    value = userProfile?.phoneNumber ?: "Not set"
+                                )
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(modifier = Modifier.height(12.dp))
 
-                            // Member Since
-                            ProfileInfoItem(
-                                icon = Icons.Default.CalendarToday,
-                                label = "Member Since",
-                                value = userProfile?.createdAt?.let {
-                                    viewModel.formatDate(it)
-                                } ?: "Unknown"
-                            )
+                                // Member Since
+                                ProfileInfoItem(
+                                    icon = Icons.Default.CalendarToday,
+                                    label = "Member Since",
+                                    value = userProfile?.createdAt?.let {
+                                        viewModel.formatDate(it)
+                                    } ?: "Unknown"
+                                )
+                            }
                         }
                     }
 
@@ -303,64 +348,87 @@ fun ProfileScreen(
 
                     // Actions Section
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        shape = RoundedCornerShape(12.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .shadow(8.dp, RoundedCornerShape(12.dp)),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.Transparent
+                        )
                     ) {
-                        Column(
-                            modifier = Modifier.padding(vertical = 8.dp)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(cardGradient)
+                                .padding(vertical = 8.dp)
                         ) {
-                            // My Bookings
-                            ActionItem(
-                                icon = Icons.Default.ConfirmationNumber,
-                                title = "My Bookings",
-                                onClick = onNavigateToBookings
-                            )
+                            Column {
+                                // My Bookings
+                                ActionItem(
+                                    icon = Icons.Default.ConfirmationNumber,
+                                    title = "My Bookings",
+                                    onClick = onNavigateToBookings
+                                )
 
-                            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                                Divider(
+                                    color = Color.White.copy(alpha = 0.1f),
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
 
-                            // Edit Profile
-                            ActionItem(
-                                icon = Icons.Default.Person,
-                                title = "Edit Profile",
-                                onClick = { showEditProfileDialog = true }
-                            )
+                                // Edit Profile
+                                ActionItem(
+                                    icon = Icons.Default.Person,
+                                    title = "Edit Profile",
+                                    onClick = { showEditProfileDialog = true }
+                                )
 
-                            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                                Divider(
+                                    color = Color.White.copy(alpha = 0.1f),
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
 
-                            // Change Password
-                            ActionItem(
-                                icon = Icons.Default.Lock,
-                                title = "Change Password",
-                                onClick = { showChangePasswordDialog = true }
-                            )
+                                // Change Password
+                                ActionItem(
+                                    icon = Icons.Default.Lock,
+                                    title = "Change Password",
+                                    onClick = { showChangePasswordDialog = true }
+                                )
 
-                            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                                Divider(
+                                    color = Color.White.copy(alpha = 0.1f),
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
 
-                            // Settings
-                            ActionItem(
-                                icon = Icons.Default.Settings,
-                                title = "Settings",
-                                onClick = { /* Navigate to settings */ }
-                            )
+                                // Settings
+                                ActionItem(
+                                    icon = Icons.Default.Settings,
+                                    title = "Settings",
+                                    onClick = { /* Navigate to settings */ }
+                                )
 
-                            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                                Divider(
+                                    color = Color.White.copy(alpha = 0.1f),
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
 
-                            ActionItem(
-                                icon = Icons.Default.Info,
-                                title = "About",
-                                onClick = onNavigateToAbout
-                            )
+                                ActionItem(
+                                    icon = Icons.Default.Info,
+                                    title = "About",
+                                    onClick = onNavigateToAbout
+                                )
 
-                            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                                Divider(
+                                    color = Color.White.copy(alpha = 0.1f),
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
 
-                            // Logout
-                            ActionItem(
-                                icon = Icons.Default.ExitToApp,
-                                title = "Logout",
-                                onClick = { showLogoutConfirmDialog = true },
-                                tint = MaterialTheme.colorScheme.error
-                            )
+                                // Logout
+                                ActionItem(
+                                    icon = Icons.Default.ExitToApp,
+                                    title = "Logout",
+                                    onClick = { showLogoutConfirmDialog = true },
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
                     }
 
@@ -374,7 +442,12 @@ fun ProfileScreen(
     if (showEditProfileDialog) {
         AlertDialog(
             onDismissRequest = { showEditProfileDialog = false },
-            title = { Text("Edit Profile") },
+            title = { 
+                Text(
+                    text = "Edit Profile",
+                    color = Color.White
+                ) 
+            },
             text = {
                 Column {
                     MovieTextField(
@@ -402,16 +475,25 @@ fun ProfileScreen(
                         showEditProfileDialog = false
                     }
                 ) {
-                    Text("Save")
+                    Text(
+                        text = "Save",
+                        color = AccentColor
+                    )
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { showEditProfileDialog = false }
                 ) {
-                    Text("Cancel")
+                    Text(
+                        text = "Cancel",
+                        color = Color.White.copy(alpha = 0.7f)
+                    )
                 }
-            }
+            },
+            containerColor = DarkNavy,
+            titleContentColor = Color.White,
+            textContentColor = Color.White
         )
     }
 
@@ -419,7 +501,12 @@ fun ProfileScreen(
     if (showChangePasswordDialog) {
         AlertDialog(
             onDismissRequest = { showChangePasswordDialog = false },
-            title = { Text("Change Password") },
+            title = { 
+                Text(
+                    text = "Change Password",
+                    color = Color.White
+                ) 
+            },
             text = {
                 Column {
                     PasswordTextField(
@@ -457,16 +544,25 @@ fun ProfileScreen(
                         }
                     }
                 ) {
-                    Text("Change Password")
+                    Text(
+                        text = "Change Password",
+                        color = AccentColor
+                    )
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { showChangePasswordDialog = false }
                 ) {
-                    Text("Cancel")
+                    Text(
+                        text = "Cancel",
+                        color = Color.White.copy(alpha = 0.7f)
+                    )
                 }
-            }
+            },
+            containerColor = DarkNavy,
+            titleContentColor = Color.White,
+            textContentColor = Color.White
         )
     }
 
@@ -474,8 +570,18 @@ fun ProfileScreen(
     if (showLogoutConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutConfirmDialog = false },
-            title = { Text("Logout") },
-            text = { Text("Are you sure you want to logout?") },
+            title = { 
+                Text(
+                    text = "Logout",
+                    color = Color.White
+                ) 
+            },
+            text = { 
+                Text(
+                    text = "Are you sure you want to logout?",
+                    color = Color.White.copy(alpha = 0.7f)
+                ) 
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -484,16 +590,25 @@ fun ProfileScreen(
                         onLogout()
                     }
                 ) {
-                    Text("Yes, Logout")
+                    Text(
+                        text = "Yes, Logout",
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { showLogoutConfirmDialog = false }
                 ) {
-                    Text("Cancel")
+                    Text(
+                        text = "Cancel",
+                        color = Color.White.copy(alpha = 0.7f)
+                    )
                 }
-            }
+            },
+            containerColor = DarkNavy,
+            titleContentColor = Color.White,
+            textContentColor = Color.White
         )
     }
 }
@@ -510,7 +625,7 @@ fun ProfileInfoItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = AccentColor,
             modifier = Modifier.padding(top = 2.dp)
         )
 
@@ -520,14 +635,15 @@ fun ProfileInfoItem(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                color = Color.White.copy(alpha = 0.6f)
             )
 
             Spacer(modifier = Modifier.height(2.dp))
 
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.White
             )
         }
     }
@@ -538,7 +654,7 @@ fun ActionItem(
     icon: ImageVector,
     title: String,
     onClick: () -> Unit,
-    tint: Color = MaterialTheme.colorScheme.onSurface
+    tint: Color = Color.White
 ) {
     Row(
         modifier = Modifier
@@ -565,7 +681,7 @@ fun ActionItem(
         Icon(
             imageVector = Icons.Default.ArrowForward,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            tint = Color.White.copy(alpha = 0.5f)
         )
     }
 }

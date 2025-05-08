@@ -1,8 +1,5 @@
 package com.example.moviebooking.ui.movie
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -10,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -65,6 +63,7 @@ import com.example.moviebooking.data.model.CinemaModel
 import com.example.moviebooking.data.model.ShowtimeModel
 import com.example.moviebooking.ui.components.MovieButton
 import com.example.moviebooking.ui.theme.AccentColor
+import com.example.moviebooking.ui.theme.DarkNavy
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -89,6 +88,21 @@ fun MovieDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
 
+    // Define gradients
+    val backgroundGradient = Brush.verticalGradient(
+        colors = listOf(
+            Color.Black,
+            DarkNavy
+        )
+    )
+
+    val cardGradient = Brush.verticalGradient(
+        colors = listOf(
+            Color.Black.copy(alpha = 0.7f),
+            Color.Black.copy(alpha = 0.9f)
+        )
+    )
+
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -100,26 +114,33 @@ fun MovieDetailScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(text = movie?.title ?: "Movie Details") },
+                title = { 
+                    Text(
+                        text = movie?.title ?: "Movie Details",
+                        color = Color.White
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = Color.White
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = Color.Transparent
                 )
             )
-        }
+        },
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(backgroundGradient)
                 .padding(paddingValues)
         ) {
             // Loading state
@@ -203,6 +224,7 @@ fun MovieDetailScreen(
                             Text(
                                 text = movie!!.title,
                                 style = MaterialTheme.typography.headlineSmall,
+                                color = Color.White,
                                 modifier = Modifier.weight(1f)
                             )
 
@@ -219,7 +241,8 @@ fun MovieDetailScreen(
                                 Text(
                                     text = String.format("%.1f/10", movie!!.rating),
                                     style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
                                 )
                             }
                         }
@@ -234,13 +257,14 @@ fun MovieDetailScreen(
                                 Card(
                                     shape = RoundedCornerShape(16.dp),
                                     colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                                        containerColor = AccentColor.copy(alpha = 0.2f)
                                     )
                                 ) {
                                     Text(
                                         text = movie!!.genres[index],
                                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                                        style = MaterialTheme.typography.bodySmall
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.White
                                     )
                                 }
                             }
@@ -255,14 +279,20 @@ fun MovieDetailScreen(
                         ) {
                             Text(
                                 text = "${movie!!.duration} minutes",
-                                style = MaterialTheme.typography.bodyMedium
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "•", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                text = "•",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White
+                            )
                             Spacer(modifier = Modifier.width(8.dp))
                             Icon(
                                 imageVector = Icons.Default.DateRange,
                                 contentDescription = null,
+                                tint = Color.White,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
@@ -270,7 +300,8 @@ fun MovieDetailScreen(
                                 text = movie!!.releaseDate?.toDate()?.let {
                                     SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(it)
                                 } ?: "Coming soon",
-                                style = MaterialTheme.typography.bodyMedium
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White
                             )
                         }
 
@@ -280,12 +311,14 @@ fun MovieDetailScreen(
                         Text(
                             text = "Overview",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = movie!!.overview,
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.7f)
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -294,29 +327,33 @@ fun MovieDetailScreen(
                         Text(
                             text = "Cast & Crew",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "Director: ${movie!!.director}",
                             style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "Cast: ${movie!!.cast.joinToString(", ")}",
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.7f)
                         )
 
                         Spacer(modifier = Modifier.height(24.dp))
-                        Divider()
+                        Divider(color = Color.White.copy(alpha = 0.1f))
                         Spacer(modifier = Modifier.height(24.dp))
 
                         // Showtimes Section
                         Text(
                             text = "Book Tickets",
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -324,7 +361,8 @@ fun MovieDetailScreen(
                         // Date selector
                         Text(
                             text = "Select Date",
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -350,7 +388,8 @@ fun MovieDetailScreen(
                         // Cinema selector
                         Text(
                             text = "Select Cinema",
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -375,7 +414,8 @@ fun MovieDetailScreen(
                         // Showtimes
                         Text(
                             text = "Select Showtime",
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -400,7 +440,7 @@ fun MovieDetailScreen(
                                     text = "No showtimes available for selected date and cinema",
                                     textAlign = TextAlign.Center,
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    color = Color.White.copy(alpha = 0.6f)
                                 )
                             }
                         } else {
@@ -420,20 +460,6 @@ fun MovieDetailScreen(
 
                         Spacer(modifier = Modifier.height(32.dp))
                     }
-                }
-
-                // Transparent overlay on top app bar
-                AnimatedVisibility(
-                    visible = scrollState.value > 0,
-                    enter = fadeIn(),
-                    exit = fadeOut()
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(paddingValues.calculateTopPadding())
-                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
-                    )
                 }
             }
         }
@@ -456,7 +482,7 @@ fun DateCard(
             defaultElevation = if (isSelected) 4.dp else 2.dp
         ),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+            containerColor = if (isSelected) AccentColor else Color.Black.copy(alpha = 0.7f)
         )
     ) {
         Column(
@@ -468,7 +494,8 @@ fun DateCard(
             Text(
                 text = formattedDate,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                color = Color.White
             )
         }
     }
@@ -489,7 +516,7 @@ fun CinemaCard(
             defaultElevation = if (isSelected) 4.dp else 2.dp
         ),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+            containerColor = if (isSelected) AccentColor else Color.Black.copy(alpha = 0.7f)
         )
     ) {
         Column(
@@ -499,6 +526,7 @@ fun CinemaCard(
                 text = cinema.name,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                color = Color.White,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -506,7 +534,7 @@ fun CinemaCard(
             Text(
                 text = cinema.city,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                color = Color.White.copy(alpha = 0.7f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -525,7 +553,10 @@ fun ShowtimeCard(
             .width(100.dp)
             .clickable { onShowtimeSelected() },
         shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Black.copy(alpha = 0.7f)
+        )
     ) {
         Column(
             modifier = Modifier
@@ -536,13 +567,14 @@ fun ShowtimeCard(
             Text(
                 text = formatTime(showtime.startTime),
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color.White
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = showtime.format,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                color = Color.White.copy(alpha = 0.7f)
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
@@ -551,7 +583,7 @@ fun ShowtimeCard(
                 color = if (showtime.availableSeats < 10)
                     Color.Red
                 else
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    Color.White.copy(alpha = 0.7f)
             )
         }
     }

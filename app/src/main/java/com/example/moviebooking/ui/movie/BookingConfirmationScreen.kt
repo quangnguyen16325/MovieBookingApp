@@ -40,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -49,6 +50,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.moviebooking.R
 import com.example.moviebooking.ui.components.MovieButton
+import com.example.moviebooking.ui.theme.AccentColor
+import com.example.moviebooking.ui.theme.DarkNavy
 import com.example.moviebooking.ui.theme.SuccessColor
 
 @Composable
@@ -67,6 +70,21 @@ fun BookingConfirmationScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
 
+    // Define gradients
+    val backgroundGradient = Brush.verticalGradient(
+        colors = listOf(
+            Color.Black,
+            DarkNavy
+        )
+    )
+
+    val cardGradient = Brush.verticalGradient(
+        colors = listOf(
+            Color.Black.copy(alpha = 0.7f),
+            Color.Black.copy(alpha = 0.9f)
+        )
+    )
+
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -75,11 +93,13 @@ fun BookingConfirmationScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = Color.Transparent
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(backgroundGradient)
                 .padding(paddingValues)
         ) {
             if (isLoading) {
@@ -91,7 +111,8 @@ fun BookingConfirmationScreen(
                 ) {
                     Text(
                         text = "Loading booking details...",
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.White
                     )
                 }
             } else if (bookingDetails != null) {
@@ -123,7 +144,8 @@ fun BookingConfirmationScreen(
                     Text(
                         text = "Booking Confirmed!",
                         style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -132,7 +154,7 @@ fun BookingConfirmationScreen(
                         text = "Your movie tickets have been booked successfully.",
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        color = Color.White.copy(alpha = 0.7f)
                     )
 
                     Spacer(modifier = Modifier.height(32.dp))
@@ -141,110 +163,120 @@ fun BookingConfirmationScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.Transparent
+                        )
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(cardGradient)
+                                .padding(16.dp)
                         ) {
-                            // QR Code Placeholder
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(120.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.QrCode,
-                                    contentDescription = "QR Code",
-                                    modifier = Modifier.size(64.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            Column {
+                                // QR Code Placeholder
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(120.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color.Black.copy(alpha = 0.5f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.QrCode,
+                                        contentDescription = "QR Code",
+                                        modifier = Modifier.size(64.dp),
+                                        tint = Color.White
+                                    )
+                                }
 
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Text(
-                                text = "Booking ID: $bookingId",
-                                style = MaterialTheme.typography.bodyMedium,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Divider()
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Movie Info
-                            InfoRow(
-                                icon = Icons.Default.MovieFilter,
-                                label = "Movie",
-                                value = bookingDetails!!.movieTitle
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Cinema Info
-                            InfoRow(
-                                icon = Icons.Default.LocationOn,
-                                label = "Cinema",
-                                value = bookingDetails!!.cinemaName
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Date Info
-                            InfoRow(
-                                icon = Icons.Default.CalendarMonth,
-                                label = "Date",
-                                value = bookingDetails!!.date
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Time Info
-                            InfoRow(
-                                icon = Icons.Default.Schedule,
-                                label = "Time",
-                                value = "${bookingDetails!!.startTime} - ${bookingDetails!!.endTime}"
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Seats Info
-                            InfoRow(
-                                icon = Icons.Default.Check,
-                                label = "Seats",
-                                value = bookingDetails!!.seats
-                            )
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Divider()
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Total Amount
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Total Amount",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Spacer(modifier = Modifier.height(16.dp))
 
                                 Text(
-                                    text = bookingDetails!!.totalAmount,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
+                                    text = "Booking ID: $bookingId",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = Color.White
                                 )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                Divider(color = Color.White.copy(alpha = 0.1f))
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                // Movie Info
+                                InfoRow(
+                                    icon = Icons.Default.MovieFilter,
+                                    label = "Movie",
+                                    value = bookingDetails!!.movieTitle
+                                )
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // Cinema Info
+                                InfoRow(
+                                    icon = Icons.Default.LocationOn,
+                                    label = "Cinema",
+                                    value = bookingDetails!!.cinemaName
+                                )
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // Date Info
+                                InfoRow(
+                                    icon = Icons.Default.CalendarMonth,
+                                    label = "Date",
+                                    value = bookingDetails!!.date
+                                )
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // Time Info
+                                InfoRow(
+                                    icon = Icons.Default.Schedule,
+                                    label = "Time",
+                                    value = "${bookingDetails!!.startTime} - ${bookingDetails!!.endTime}"
+                                )
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // Seats Info
+                                InfoRow(
+                                    icon = Icons.Default.Check,
+                                    label = "Seats",
+                                    value = bookingDetails!!.seats
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                Divider(color = Color.White.copy(alpha = 0.1f))
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                // Total Amount
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Total Amount",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+
+                                    Text(
+                                        text = bookingDetails!!.totalAmount,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = AccentColor
+                                    )
+                                }
                             }
                         }
                     }
@@ -280,7 +312,8 @@ fun BookingConfirmationScreen(
                     Text(
                         text = "Booking not found",
                         style = MaterialTheme.typography.headlineSmall,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        color = Color.White
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -310,7 +343,7 @@ fun InfoRow(
             imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.primary
+            tint = AccentColor
         )
 
         Spacer(modifier = Modifier.size(12.dp))
@@ -319,12 +352,13 @@ fun InfoRow(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                color = Color.White.copy(alpha = 0.7f)
             )
 
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.White
             )
         }
     }

@@ -1,5 +1,8 @@
 package com.example.moviebooking.ui.about
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -7,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,11 +37,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -46,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.moviebooking.R
+import com.example.moviebooking.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,207 +69,293 @@ fun AboutScreen(
     val appVersion = "1.0.0"
     val appVersionCode = "1"
 
+    var logoVisible by remember { mutableStateOf(false) }
+
+    val logoScale by animateFloatAsState(
+        targetValue = if (logoVisible) 1f else 0.8f,
+        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+        label = "logoScale"
+    )
+
+    // Define gradients
+    val backgroundGradient = Brush.radialGradient(
+        colors = listOf(
+            DarkNavy.copy(alpha = 0.9f),
+            DarkNavy
+        ),
+        center = Offset(0f, 0f),
+        radius = 1500f
+    )
+
+    val cardGradient = Brush.verticalGradient(
+        colors = listOf(
+            DarkNavyLight.copy(alpha = 0.7f),
+            DarkNavyLight.copy(alpha = 0.9f)
+        )
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("About") },
+                title = { 
+                    Text(
+                        text = "About",
+                        color = Color.White
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = Color.White
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent
+                )
             )
-        }
+        },
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(backgroundGradient)
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // App Logo
-            Box(
+            Column(
                 modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.cineai_1),
-                    contentDescription = "App Logo",
-                    modifier = Modifier.size(150.dp)
+                // App Logo
+                Box(
+                    modifier = Modifier
+                        .size(170.dp)
+                        .shadow(6.dp, CircleShape)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(
+                                    AccentColor.copy(alpha = 0.7f),
+                                    DarkNavyLight.copy(alpha = 0.8f)
+                                )
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.cineai_1),
+                        contentDescription = "App Logo",
+                        modifier = Modifier
+                            .size(180.dp)
+                            .graphicsLayer {
+                                scaleX = logoScale
+                                scaleY = logoScale
+                            }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // App Name and Version
+                Text(
+                    text = "Cine AI",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
-            // App Name and Version
-            Text(
-                text = "Cine AI",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
+                Text(
+                    text = "Version $appVersion ($appVersionCode)",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
 
-            Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-            Text(
-                text = "Version $appVersion ($appVersionCode)",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // App Description
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
+                // App Description
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(8.dp, RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.Transparent
+                    )
                 ) {
-                    Text(
-                        text = "About Cine AI",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(cardGradient)
+                            .padding(16.dp)
+                    ) {
+                        Column {
+                            Text(
+                                text = "About Cine AI",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                    Text(
-                        text = "Cine AI is a modern movie booking application that allows users to easily browse, search, and book tickets for movies showing in theaters.",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                            Text(
+                                text = "Cine AI is a modern movie booking application that allows users to easily browse, search, and book tickets for movies showing in theaters.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.White
+                            )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                    Text(
-                        text = "With Cine AI, you can view movie details, select showtimes, choose seats, and complete your booking all in one seamless experience.",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                            Text(
+                                text = "With Cine AI, you can view movie details, select showtimes, choose seats, and complete your booking all in one seamless experience.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.White
+                            )
+                        }
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            // Features
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
+                // Features
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(8.dp, RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.Transparent
+                    )
                 ) {
-                    Text(
-                        text = "Key Features",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(cardGradient)
+                            .padding(16.dp)
+                    ) {
+                        Column {
+                            Text(
+                                text = "Key Features",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                    FeatureItem(
-                        text = "Browse Now Showing & Coming Soon movies"
-                    )
+                            FeatureItem(
+                                text = "Browse Now Showing & Coming Soon movies"
+                            )
 
-                    FeatureItem(
-                        text = "View detailed movie information and trailers"
-                    )
+                            FeatureItem(
+                                text = "View detailed movie information and trailers"
+                            )
 
-                    FeatureItem(
-                        text = "Select from multiple theaters and showtimes"
-                    )
+                            FeatureItem(
+                                text = "Select from multiple theaters and showtimes"
+                            )
 
-                    FeatureItem(
-                        text = "Interactive seat selection experience"
-                    )
+                            FeatureItem(
+                                text = "Interactive seat selection experience"
+                            )
 
-                    FeatureItem(
-                        text = "Secure booking and payment process"
-                    )
+                            FeatureItem(
+                                text = "Secure booking and payment process"
+                            )
 
-                    FeatureItem(
-                        text = "View and manage your bookings"
-                    )
+                            FeatureItem(
+                                text = "View and manage your bookings"
+                            )
 
-                    FeatureItem(
-                        text = "Personalized user profiles"
-                    )
+                            FeatureItem(
+                                text = "Personalized user profiles"
+                            )
+                        }
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            // Developer Info
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
+                // Developer Info
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(8.dp, RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.Transparent
+                    )
                 ) {
-                    Text(
-                        text = "Development team",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(cardGradient)
+                            .padding(16.dp)
+                    ) {
+                        Column {
+                            Text(
+                                text = "Development team",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(
-                        text = "Quang Nguyen & Tho Le",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                            Text(
+                                text = "Quang Nguyen & Tho Le",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                    ContactItem(
-                        icon = Icons.Default.Email,
-                        text = "quangnguyen16325@gmail.com"
-                    )
+                            ContactItem(
+                                icon = Icons.Default.Email,
+                                text = "quangnguyen16325@gmail.com"
+                            )
 
-                    ContactItem(
-                        icon = Icons.Default.Phone,
-                        text = "+84 386 708 875"
-                    )
+                            ContactItem(
+                                icon = Icons.Default.Phone,
+                                text = "+84 386 708 875"
+                            )
 
-                    ContactItem(
-                        icon = Icons.Default.Language,
-                        text = "www.cineai.vn"
-                    )
+                            ContactItem(
+                                icon = Icons.Default.Language,
+                                text = "www.cineai.vn"
+                            )
+                        }
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Copyright Information
+                Text(
+                    text = "© 2025 Cine AI. All rights reserved.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Created on May 06, 2025",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.5f),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Copyright Information
-            Text(
-                text = "© 2025 Cine AI. All rights reserved.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Created on May 06, 2025",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
@@ -271,7 +371,7 @@ fun FeatureItem(text: String) {
         Icon(
             imageVector = Icons.Default.Star,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = AccentColor,
             modifier = Modifier
                 .padding(top = 2.dp)
                 .size(16.dp)
@@ -281,7 +381,8 @@ fun FeatureItem(text: String) {
 
         Text(
             text = text,
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color.White
         )
     }
 }
@@ -297,7 +398,7 @@ fun ContactItem(icon: ImageVector, text: String) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = AccentColor,
             modifier = Modifier.size(20.dp)
         )
 
@@ -305,7 +406,8 @@ fun ContactItem(icon: ImageVector, text: String) {
 
         Text(
             text = text,
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White
         )
     }
 }

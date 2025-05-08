@@ -1,5 +1,6 @@
 package com.example.moviebooking.data.repository
 
+import android.util.Log
 import com.example.moviebooking.data.model.ShowtimeModel
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
@@ -12,6 +13,7 @@ import kotlinx.coroutines.withContext
 import java.util.Date
 
 class ShowtimeRepository {
+    private val TAG = "ShowtimeRepository"
     private val firestore = FirebaseFirestore.getInstance()
     private val showtimesCollection = firestore.collection("showtimes")
 
@@ -19,7 +21,7 @@ class ShowtimeRepository {
         try {
             val snapshot = showtimesCollection
                 .whereEqualTo("movieId", movieId)
-                .whereGreaterThan("date", Timestamp.now())
+                .whereGreaterThan("startTime", Timestamp.now())
                 .get()
                 .await()
 
@@ -36,7 +38,7 @@ class ShowtimeRepository {
         try {
             val snapshot = showtimesCollection
                 .whereEqualTo("cinemaId", cinemaId)
-                .whereGreaterThan("date", Timestamp.now())
+                .whereGreaterThan("startTime", Timestamp.now())
                 .get()
                 .await()
 
@@ -51,6 +53,8 @@ class ShowtimeRepository {
 
     suspend fun getShowtimesForMovieAndDate(movieId: String, date: Date): Flow<List<ShowtimeModel>> = flow {
         try {
+            Log.d(TAG, "Getting showtimes for movie: $movieId and date: $date")
+            
             // Create Timestamp for the start of the day
             val calendar = java.util.Calendar.getInstance()
             calendar.time = date
@@ -65,18 +69,32 @@ class ShowtimeRepository {
             calendar.set(java.util.Calendar.SECOND, 59)
             val endOfDay = Timestamp(calendar.time)
 
+            Log.d(TAG, "Querying showtimes between $startOfDay and $endOfDay")
+
             val snapshot = showtimesCollection
                 .whereEqualTo("movieId", movieId)
-                .whereGreaterThanOrEqualTo("date", startOfDay)
-                .whereLessThanOrEqualTo("date", endOfDay)
+                .whereGreaterThanOrEqualTo("startTime", startOfDay)
+                .whereLessThanOrEqualTo("startTime", endOfDay)
                 .get()
                 .await()
 
+            Log.d(TAG, "Found ${snapshot.documents.size} showtimes")
+
             val showtimes = snapshot.documents.mapNotNull { document ->
-                document.toObject(ShowtimeModel::class.java)
+                try {
+                    val showtime = document.toObject(ShowtimeModel::class.java)
+                    Log.d(TAG, "Parsed showtime: id=${showtime?.id}, startTime=${showtime?.startTime}")
+                    showtime
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error parsing showtime from document ${document.id}: ${e.message}")
+                    null
+                }
             }
+
+            Log.d(TAG, "Emitting ${showtimes.size} showtimes")
             emit(showtimes)
         } catch (e: Exception) {
+            Log.e(TAG, "Error getting showtimes: ${e.message}")
             emit(emptyList())
         }
     }.flowOn(Dispatchers.IO)
@@ -86,7 +104,7 @@ class ShowtimeRepository {
             val snapshot = showtimesCollection
                 .whereEqualTo("movieId", movieId)
                 .whereEqualTo("cinemaId", cinemaId)
-                .whereGreaterThan("date", Timestamp.now())
+                .whereGreaterThan("startTime", Timestamp.now())
                 .get()
                 .await()
 
