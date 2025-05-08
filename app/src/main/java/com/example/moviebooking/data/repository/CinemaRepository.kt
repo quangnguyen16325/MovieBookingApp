@@ -1,8 +1,6 @@
 package com.example.moviebooking.data.repository
 
 import com.example.moviebooking.data.model.CinemaModel
-import com.example.moviebooking.data.model.ScreenModel
-import com.example.moviebooking.data.model.ShowtimeModel
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -27,68 +25,32 @@ class CinemaRepository {
         }
     }.flowOn(Dispatchers.IO)
 
-    suspend fun getCinemaScreens(cinemaId: String): Flow<List<ScreenModel>> = flow {
-        try {
-            val screensSnapshot = cinemasCollection.document(cinemaId)
-                .collection("screens")
-                .get()
-                .await()
-            
-            val screens = screensSnapshot.documents.mapNotNull { document ->
-                document.toObject(ScreenModel::class.java)
-            }
-            emit(screens)
-        } catch (e: Exception) {
-            emit(emptyList())
-        }
-    }.flowOn(Dispatchers.IO)
-
-    suspend fun getScreenShowtimes(cinemaId: String, screenId: String): Flow<List<ShowtimeModel>> = flow {
-        try {
-            val showtimesSnapshot = cinemasCollection.document(cinemaId)
-                .collection("screens")
-                .document(screenId)
-                .collection("showtimes")
-                .get()
-                .await()
-            
-            val showtimes = showtimesSnapshot.documents.mapNotNull { document ->
-                document.toObject(ShowtimeModel::class.java)
-            }
-            emit(showtimes)
-        } catch (e: Exception) {
-            emit(emptyList())
-        }
-    }.flowOn(Dispatchers.IO)
-
     suspend fun getCinemasForMovie(movieId: String): Flow<List<CinemaModel>> = flow {
         try {
-            // Get all cinemas
-            val cinemasSnapshot = cinemasCollection.get().await()
-            val cinemas = mutableListOf<CinemaModel>()
+            // Get showtimes for this movie
+            val showtimeSnapshot = firestore.collection("showtimes")
+                .whereEqualTo("movieId", movieId)
+                .get()
+                .await()
 
-            // For each cinema, check if it has showtimes for the movie
-            for (cinemaDoc in cinemasSnapshot.documents) {
-                val screensSnapshot = cinemaDoc.reference.collection("screens").get().await()
-                
-                for (screenDoc in screensSnapshot.documents) {
-                    val showtimesSnapshot = screenDoc.reference.collection("showtimes")
-                        .whereEqualTo("movieId", movieId)
-                        .get()
-                        .await()
+            // Extract unique cinema IDs
+            val cinemaIds = showtimeSnapshot.documents
+                .mapNotNull { it.getString("cinemaId") }
+                .distinct()
 
-                    if (!showtimesSnapshot.isEmpty) {
-                        cinemaDoc.toObject(CinemaModel::class.java)?.let { cinema ->
-                            if (!cinemas.contains(cinema)) {
-                                cinemas.add(cinema)
-                            }
-                        }
-                        break
-                    }
-                }
+            if (cinemaIds.isEmpty()) {
+                emit(emptyList())
+                return@flow
             }
 
-            emit(cinemas)
+            // Get cinemas by IDs
+            val cinemasList = mutableListOf<CinemaModel>()
+            cinemaIds.forEach { cinemaId ->
+                val cinemaDoc = cinemasCollection.document(cinemaId).get().await()
+                cinemaDoc.toObject(CinemaModel::class.java)?.let { cinemasList.add(it) }
+            }
+
+            emit(cinemasList)
         } catch (e: Exception) {
             emit(emptyList())
         }
