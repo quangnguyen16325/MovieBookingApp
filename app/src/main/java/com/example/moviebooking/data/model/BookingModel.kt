@@ -12,7 +12,8 @@ data class BookingModel(
     val seats: List<String> = listOf(), // List of seat IDs
     val totalAmount: Double = 0.0,
     val bookingDate: Timestamp? = Timestamp.now(),
-    val status: BookingStatus = BookingStatus.PENDING
+    val status: BookingStatus = BookingStatus.PENDING,
+    val paymentMethod: String = ""
 ) {
     fun toMap(): Map<String, Any?> {
         return mapOf(
@@ -23,7 +24,8 @@ data class BookingModel(
             "seats" to seats,
             "totalAmount" to totalAmount,
             "bookingDate" to bookingDate,
-            "status" to status.toString()
+            "status" to status.toString(),
+            "paymentMethod" to paymentMethod
         )
     }
 }

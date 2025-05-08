@@ -179,33 +179,34 @@ class BookingViewModel(private val showtimeId: String) : ViewModel() {
     }
 
     fun confirmBooking() {
-        val showtime = _showtime.value ?: return
-        val movie = _movie.value ?: return
-        val cinema = _cinema.value ?: return
-        val selectedSeats = _selectedSeats.value
-
-        if (selectedSeats.isEmpty()) {
-            _errorMessage.value = "Please select at least one seat"
-            return
-        }
-
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
 
             try {
+                if (_selectedSeats.value.isEmpty()) {
+                    _errorMessage.value = "Please select at least one seat"
+                    _isLoading.value = false
+                    return@launch
+                }
+
+                val showtime = _showtime.value ?: throw Exception("Showtime not found")
+                val movie = _movie.value ?: throw Exception("Movie not found")
+                val cinema = _cinema.value ?: throw Exception("Cinema not found")
+
                 val result = bookingRepository.createBooking(
                     showtimeId = showtime.id,
                     movieId = movie.id,
                     cinemaId = cinema.id,
-                    selectedSeats = selectedSeats,
-                    totalAmount = _totalPrice.value
+                    selectedSeats = _selectedSeats.value,
+                    totalAmount = _totalPrice.value,
+                    paymentMethod = "CREDIT_CARD" // Mặc định là CREDIT_CARD vì thanh toán sẽ được xử lý ở PaymentScreen
                 )
 
                 _bookingResult.value = result
+                _isLoading.value = false
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to create booking: ${e.message}"
-            } finally {
+                _errorMessage.value = e.message ?: "An unexpected error occurred"
                 _isLoading.value = false
             }
         }

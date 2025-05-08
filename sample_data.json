@@ -1,0 +1,85 @@
+{
+  "cinemas": {
+    "cinema1": {
+      "name": "CGV Aeon Mall",
+      "address": "30 Bờ Bao Tân Thắng, Sơn Kỳ, Tân Phú, TP.HCM",
+      "city": "Hồ Chí Minh",
+      "imageUrl": "https://example.com/cgv-aeon.jpg",
+      "facilities": ["Parking", "Food Court", "Wheelchair Access"],
+      "location": {
+        "latitude": 10.762622,
+        "longitude": 106.660172
+      },
+      "screens": {
+        "screen1": {
+          "name": "Screen 1",
+          "capacity": 200,
+          "type": "Standard",
+          "showtimes": {
+            "showtime1": {
+              "movieId": "movie1",
+              "startTime": "2024-03-20T10:00:00Z",
+              "endTime": "2024-03-20T12:30:00Z",
+              "price": 120000,
+              "format": "2D",
+              "seats": {
+                "seat1": {
+                  "row": "A",
+                  "number": 1,
+                  "type": "STANDARD",
+                  "isAvailable": true
+                },
+                "seat2": {
+                  "row": "A",
+                  "number": 2,
+                  "type": "STANDARD",
+                  "isAvailable": false
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "movies": {
+    "movie1": {
+      "title": "Avengers: Endgame",
+      "overview": "After the devastating events of Avengers: Infinity War, the universe is in ruins...",
+      "posterUrl": "https://example.com/avengers-poster.jpg",
+      "backdropUrl": "https://example.com/avengers-backdrop.jpg",
+      "releaseDate": "2024-03-15T00:00:00Z",
+      "duration": 181,
+      "genres": ["Action", "Adventure", "Sci-Fi"],
+      "rating": 8.4,
+      "cast": ["Robert Downey Jr.", "Chris Evans", "Mark Ruffalo"],
+      "director": "Russo Brothers",
+      "trailerUrl": "https://youtube.com/watch?v=example",
+      "isNowShowing": true,
+      "isComingSoon": false
+    }
+  },
+  "users": {
+    "user1": {
+      "email": "user@example.com",
+      "fullName": "Nguyễn Văn A",
+      "profileImage": "https://example.com/profile.jpg",
+      "phoneNumber": "0123456789",
+      "createdAt": "2024-03-01T00:00:00Z",
+      "lastLogin": "2024-03-20T08:00:00Z"
+    }
+  },
+  "bookings": {
+    "booking1": {
+      "userId": "user1",
+      "showtimeId": "showtime1",
+      "movieId": "movie1",
+      "cinemaId": "cinema1",
+      "seats": ["seat1", "seat2"],
+      "totalAmount": 240000,
+      "bookingDate": "2024-03-19T15:30:00Z",
+      "status": "CONFIRMED",
+      "paymentMethod": "MOMO"
+    }
+  }
+} 

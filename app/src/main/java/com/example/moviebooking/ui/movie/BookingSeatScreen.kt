@@ -39,6 +39,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -57,6 +59,7 @@ import com.example.moviebooking.data.model.SeatModel
 import com.example.moviebooking.data.model.SeatType
 import com.example.moviebooking.ui.components.MovieButton
 import com.example.moviebooking.ui.theme.AccentColor
+import com.example.moviebooking.ui.theme.DarkNavy
 import com.example.moviebooking.ui.theme.SeatAvailable
 import com.example.moviebooking.ui.theme.SeatSelected
 import com.example.moviebooking.ui.theme.SeatUnavailable
@@ -64,9 +67,9 @@ import com.example.moviebooking.ui.theme.SeatUnavailable
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookingSeatScreen(
-    viewModel: BookingViewModel,
     onBackClick: () -> Unit,
-    onBookingComplete: (String) -> Unit
+    onNavigateToPayment: () -> Unit,
+    viewModel: BookingViewModel
 ) {
     val showtime by viewModel.showtime.collectAsState()
     val movie by viewModel.movie.collectAsState()
@@ -81,6 +84,13 @@ fun BookingSeatScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
 
+    val backgroundGradient = Brush.verticalGradient(
+        colors = listOf(
+            Color.Black,
+            DarkNavy
+        )
+    )
+
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -90,7 +100,7 @@ fun BookingSeatScreen(
 
     LaunchedEffect(bookingResult) {
         bookingResult?.onSuccess { booking ->
-            onBookingComplete(booking.id)
+            onNavigateToPayment()
         }
     }
 
@@ -104,21 +114,32 @@ fun BookingSeatScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Select Seats") },
+                title = { 
+                    Text(
+                        text = "Select Seats",
+                        color = Color.White
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = Color.White
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent
+                )
             )
-        }
+        },
+        containerColor = Color.Transparent
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(backgroundGradient)
                 .padding(paddingValues)
         ) {
             if (isLoading && movie == null) {
@@ -138,7 +159,10 @@ fun BookingSeatScreen(
                     // Movie and Showtime Info
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.Black.copy(alpha = 0.7f)
+                        )
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp)
@@ -146,7 +170,8 @@ fun BookingSeatScreen(
                             Text(
                                 text = movie!!.title,
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
                             )
 
                             Spacer(modifier = Modifier.height(8.dp))
@@ -155,7 +180,8 @@ fun BookingSeatScreen(
                                 Text(
                                     text = "${viewModel.formatDate(showtime!!.date)} • " +
                                             "${viewModel.formatTime(showtime!!.startTime)}",
-                                    style = MaterialTheme.typography.bodyMedium
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White
                                 )
                             }
 
@@ -163,7 +189,8 @@ fun BookingSeatScreen(
 
                             Text(
                                 text = cinema!!.name,
-                                style = MaterialTheme.typography.bodyMedium
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White
                             )
 
                             Spacer(modifier = Modifier.height(4.dp))
@@ -173,7 +200,8 @@ fun BookingSeatScreen(
                             ) {
                                 Text(
                                     text = showtime!!.format,
-                                    style = MaterialTheme.typography.bodyMedium
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White
                                 )
 
                                 Spacer(modifier = Modifier.width(16.dp))
@@ -181,13 +209,13 @@ fun BookingSeatScreen(
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(4.dp))
-                                        .background(MaterialTheme.colorScheme.primaryContainer)
+                                        .background(AccentColor.copy(alpha = 0.2f))
                                         .padding(horizontal = 8.dp, vertical = 2.dp)
                                 ) {
                                     Text(
                                         text = "Screen ${showtime!!.screenId.substringAfterLast("_")}",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        color = Color.White
                                     )
                                 }
                             }
@@ -289,7 +317,8 @@ fun BookingSeatScreen(
                                 text = row,
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.width(20.dp)
+                                modifier = Modifier.width(20.dp),
+                                color = Color.White
                             )
 
                             // Seats in this row
@@ -304,7 +333,7 @@ fun BookingSeatScreen(
 
                     // Add extra space at bottom to account for checkout panel
                     if (showCheckoutPanel) {
-                        Spacer(modifier = Modifier.height(80.dp))
+                        Spacer(modifier = Modifier.height(180.dp))
                     }
                 }
 
@@ -313,14 +342,19 @@ fun BookingSeatScreen(
                     visible = showCheckoutPanel,
                     enter = slideInVertically(initialOffsetY = { it }),
                     exit = slideOutVertically(targetOffsetY = { it }),
-                    modifier = Modifier.align(Alignment.BottomCenter)
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 32.dp)
                 ) {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(horizontal = 16.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.Black.copy(alpha = 0.9f)
+                        )
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp)
@@ -331,13 +365,15 @@ fun BookingSeatScreen(
                             ) {
                                 Text(
                                     text = "${selectedSeats.size} Seats",
-                                    style = MaterialTheme.typography.bodyMedium
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White
                                 )
 
                                 Text(
                                     text = viewModel.formatPrice(totalPrice),
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
                                 )
                             }
 
@@ -346,15 +382,14 @@ fun BookingSeatScreen(
                             Text(
                                 text = selectedSeats.joinToString(", ") { "${it.row}${it.number}" },
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                color = Color.White.copy(alpha = 0.7f)
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
 
                             MovieButton(
                                 text = "Proceed to Payment",
-                                onClick = { viewModel.confirmBooking() },
-                                isLoading = isLoading,
+                                onClick = onNavigateToPayment,
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -383,7 +418,8 @@ fun SeatLegendItem(
 
         Text(
             text = text,
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.White
         )
     }
 }
@@ -421,7 +457,8 @@ fun SeatTypeLegendItem(
 
         Text(
             text = text,
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.White
         )
     }
 }
@@ -451,6 +488,12 @@ fun SeatItem(
         SeatType.COUPLE -> 2.dp
     }
 
+    val textColor = when {
+        !seat.isAvailable -> Color.Gray
+        seat.isSelected -> Color.White
+        else -> Color.Black
+    }
+
     Box(
         modifier = Modifier
             .size(30.dp)
@@ -463,7 +506,7 @@ fun SeatItem(
         Text(
             text = seat.number.toString(),
             style = MaterialTheme.typography.bodySmall,
-            color = if (seat.isSelected) Color.White else Color.DarkGray
+            color = textColor
         )
     }
 }

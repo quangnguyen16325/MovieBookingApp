@@ -25,11 +25,12 @@ import com.example.moviebooking.ui.movie.MovieDetailViewModel
 import com.example.moviebooking.ui.movie.BookingSeatScreen
 import com.example.moviebooking.ui.movie.BookingViewModel
 import com.example.moviebooking.ui.movie.BookingConfirmationScreen
+import com.example.moviebooking.ui.movie.BookingConfirmationViewModel
 import com.example.moviebooking.ui.profile.BookingsScreen
-import com.example.moviebooking.ui.profile.ProfileScreen
 import com.example.moviebooking.ui.profile.ProfileScreenWrapper
-import com.example.moviebooking.ui.profile.ProfileViewModel
 import com.example.moviebooking.ui.search.SearchScreen
+import com.example.moviebooking.ui.payment.PaymentScreen
+import com.example.moviebooking.ui.payment.PaymentViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -62,6 +63,7 @@ fun AppNavigation(
             currentRoute == Screen.Search.route -> onScreenChange(Screen.Search)
             currentRoute == Screen.Notifications.route -> onScreenChange(Screen.Notifications)
             currentRoute == Screen.About.route -> onScreenChange(Screen.About)
+            currentRoute == Screen.Payment.route -> onScreenChange(Screen.Payment)
             else -> { /* Login, register, etc. stay as is */ }
         }
     }
@@ -152,7 +154,12 @@ fun AppNavigation(
             BookingSeatScreen(
                 viewModel = bookingViewModel,
                 onBackClick = { navController.popBackStack() },
-                onBookingComplete = actions.navigateToBookingConfirmation
+                onNavigateToPayment = {
+                    navController.currentBackStackEntry?.savedStateHandle?.set("showtimeId", showtimeId)
+                    navController.currentBackStackEntry?.savedStateHandle?.set("selectedSeats", bookingViewModel.selectedSeats.value.map { "${it.row}${it.number}" })
+                    navController.currentBackStackEntry?.savedStateHandle?.set("totalPrice", bookingViewModel.totalPrice.value)
+                    actions.navigateToPayment()
+                }
             )
         }
 
@@ -161,11 +168,15 @@ fun AppNavigation(
             arguments = listOf(navArgument("bookingId") { type = NavType.StringType })
         ) { backStackEntry ->
             val bookingId = backStackEntry.arguments?.getString("bookingId") ?: ""
+            val bookingConfirmationViewModel: BookingConfirmationViewModel = viewModel(
+                factory = BookingConfirmationViewModel.Factory(bookingId)
+            )
 
             BookingConfirmationScreen(
                 bookingId = bookingId,
                 onViewMyBookings = actions.navigateToBookings,
-                onBackToHome = actions.navigateToHome
+                onBackToHome = actions.navigateToHome,
+                viewModel = bookingConfirmationViewModel
             )
         }
 
@@ -227,6 +238,37 @@ fun AppNavigation(
             )
         }
 
+        composable(Screen.Payment.route) {
+            val showtimeId = navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.get<String>("showtimeId") ?: ""
+            
+            val selectedSeats = navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.get<List<String>>("selectedSeats") ?: emptyList()
+                
+            val totalPrice = navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.get<Double>("totalPrice") ?: 0.0
+                
+            val paymentViewModel: PaymentViewModel = viewModel(
+                factory = PaymentViewModel.Factory(showtimeId, selectedSeats, totalPrice)
+            )
+            
+            PaymentScreen(
+                onBackClick = { navController.popBackStack() },
+                onPaymentSuccess = { bookingId ->
+                    navController.navigate("booking_confirmation/$bookingId") {
+                        popUpTo(navController.graph.startDestinationId) {
+                            saveState = false
+                        }
+                        launchSingleTop = true
+                        restoreState = false
+                    }
+                },
+                viewModel = paymentViewModel
+            )
+        }
     }
 }
 
@@ -248,6 +290,7 @@ sealed class Screen(val route: String) {
     object BookingDetail : Screen("booking_detail/{bookingId}")
     object Notifications : Screen("notifications")
     object About : Screen("about")
+    object Payment : Screen("payment")
 
     fun createRoute(vararg args: String): String {
         return buildString {
@@ -327,5 +370,9 @@ class AppNavigationActions(navController: NavHostController) {
 
     val navigateToAbout: () -> Unit = {
         navController.navigate(Screen.About.route)
+    }
+
+    val navigateToPayment: () -> Unit = {
+        navController.navigate(Screen.Payment.route)
     }
 }

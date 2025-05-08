@@ -577,14 +577,14 @@ fun ShowtimeCard(
                 color = Color.White.copy(alpha = 0.7f)
             )
             Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "${showtime.availableSeats}/${showtime.totalSeats}",
-                style = MaterialTheme.typography.bodySmall,
-                color = if (showtime.availableSeats < 10)
-                    Color.Red
-                else
-                    Color.White.copy(alpha = 0.7f)
-            )
+//            Text(
+//                text = "${showtime.availableSeats}/${showtime.totalSeats}",
+//                style = MaterialTheme.typography.bodySmall,
+//                color = if (showtime.availableSeats < 10)
+//                    Color.Red
+//                else
+//                    Color.White.copy(alpha = 0.7f)
+//            )
         }
     }
 }

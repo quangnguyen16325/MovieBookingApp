@@ -3,6 +3,9 @@ package com.example.moviebooking.data.repository
 import com.example.moviebooking.data.model.BookingModel
 import com.example.moviebooking.data.model.BookingStatus
 import com.example.moviebooking.data.model.SeatModel
+import com.example.moviebooking.data.model.ShowtimeModel
+import com.example.moviebooking.data.model.MovieModel
+import com.example.moviebooking.data.model.CinemaModel
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -19,13 +22,17 @@ class BookingRepository {
     private val bookingsCollection = firestore.collection("bookings")
     private val seatsCollection = firestore.collection("seats")
     private val showtimesCollection = firestore.collection("showtimes")
+    private val moviesCollection = firestore.collection("movies")
+    private val cinemasCollection = firestore.collection("cinemas")
 
     suspend fun createBooking(
+        cinemaId: String,
+        screenId: String,
         showtimeId: String,
         movieId: String,
-        cinemaId: String,
         selectedSeats: List<SeatModel>,
-        totalAmount: Double
+        totalAmount: Double,
+        paymentMethod: String
     ): Result<BookingModel> = withContext(Dispatchers.IO) {
         try {
             val currentUser = auth.currentUser ?: throw Exception("User not authenticated")
@@ -39,7 +46,8 @@ class BookingRepository {
                 seats = selectedSeats.map { it.id },
                 totalAmount = totalAmount,
                 bookingDate = Timestamp.now(),
-                status = BookingStatus.PENDING
+                status = BookingStatus.PENDING,
+                paymentMethod = paymentMethod
             )
 
             // Start a batch write
@@ -49,17 +57,19 @@ class BookingRepository {
             val bookingRef = bookingsCollection.document()
             batch.set(bookingRef, booking.toMap())
 
-            // Update seat availability
+            // Update seats in the showtime
             selectedSeats.forEach { seat ->
-                val seatRef = seatsCollection.document(seat.id)
+                val seatRef = firestore.collection("cinemas")
+                    .document(cinemaId)
+                    .collection("screens")
+                    .document(screenId)
+                    .collection("showtimes")
+                    .document(showtimeId)
+                    .collection("seats")
+                    .document(seat.id)
+
                 batch.update(seatRef, "isAvailable", false)
             }
-
-            // Update available seats count in showtime
-            val showtimeRef = showtimesCollection.document(showtimeId)
-            val showtime = showtimeRef.get().await()
-            val currentAvailableSeats = showtime.getLong("availableSeats") ?: 0
-            batch.update(showtimeRef, "availableSeats", currentAvailableSeats - selectedSeats.size)
 
             // Commit the batch
             batch.commit().await()
@@ -74,9 +84,10 @@ class BookingRepository {
     suspend fun getUserBookings(): Flow<List<BookingModel>> = flow {
         try {
             val currentUser = auth.currentUser ?: throw Exception("User not authenticated")
-
+            
             val snapshot = bookingsCollection
                 .whereEqualTo("userId", currentUser.uid)
+                .orderBy("bookingDate", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .get()
                 .await()
 
@@ -104,43 +115,74 @@ class BookingRepository {
         }
     }
 
+    suspend fun updateBookingStatus(bookingId: String, status: BookingStatus): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            bookingsCollection.document(bookingId)
+                .update("status", status.toString())
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun cancelBooking(bookingId: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            // Get the booking first
-            val bookingDoc = bookingsCollection.document(bookingId).get().await()
-            val booking = bookingDoc.toObject(BookingModel::class.java)
-                ?: throw Exception("Booking not found")
-
-            // Can only cancel PENDING bookings
-            if (booking.status != BookingStatus.PENDING) {
-                throw Exception("Cannot cancel a ${booking.status} booking")
-            }
+            val booking = bookingsCollection.document(bookingId).get().await()
+                .toObject(BookingModel::class.java) ?: throw Exception("Booking not found")
 
             // Start a batch write
             val batch = firestore.batch()
 
             // Update booking status
-            val bookingRef = bookingsCollection.document(bookingId)
-            batch.update(bookingRef, "status", BookingStatus.CANCELLED.toString())
+            batch.update(bookingsCollection.document(bookingId), "status", BookingStatus.CANCELLED.toString())
 
-            // Update seat availability
+            // Update seats back to available
             booking.seats.forEach { seatId ->
-                val seatRef = seatsCollection.document(seatId)
+                val seatRef = firestore.collection("cinemas")
+                    .document(booking.cinemaId)
+                    .collection("screens")
+                    .document(booking.screenId)
+                    .collection("showtimes")
+                    .document(booking.showtimeId)
+                    .collection("seats")
+                    .document(seatId)
+
                 batch.update(seatRef, "isAvailable", true)
             }
 
-            // Update available seats count in showtime
-            val showtimeRef = showtimesCollection.document(booking.showtimeId)
-            val showtime = showtimeRef.get().await()
-            val currentAvailableSeats = showtime.getLong("availableSeats") ?: 0
-            batch.update(showtimeRef, "availableSeats", currentAvailableSeats + booking.seats.size)
-
             // Commit the batch
             batch.commit().await()
-
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    suspend fun getShowtimeById(showtimeId: String): ShowtimeModel? = withContext(Dispatchers.IO) {
+        try {
+            val document = showtimesCollection.document(showtimeId).get().await()
+            document.toObject(ShowtimeModel::class.java)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    suspend fun getMovieById(movieId: String): MovieModel? = withContext(Dispatchers.IO) {
+        try {
+            val document = moviesCollection.document(movieId).get().await()
+            document.toObject(MovieModel::class.java)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    suspend fun getCinemaById(cinemaId: String): CinemaModel? = withContext(Dispatchers.IO) {
+        try {
+            val document = cinemasCollection.document(cinemaId).get().await()
+            document.toObject(CinemaModel::class.java)
+        } catch (e: Exception) {
+            null
         }
     }
 }

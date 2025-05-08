@@ -71,7 +71,9 @@ import com.example.moviebooking.ui.theme.AccentColor
 import com.example.moviebooking.ui.theme.DarkNavy
 import com.example.moviebooking.ui.theme.DarkNavyLight
 import com.google.firebase.firestore.FirebaseFirestore
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
