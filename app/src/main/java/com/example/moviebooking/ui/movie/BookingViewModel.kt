@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
+import com.example.moviebooking.util.DateFormats
 
 class BookingViewModel(private val showtimeId: String) : ViewModel() {
 
@@ -109,42 +110,51 @@ class BookingViewModel(private val showtimeId: String) : ViewModel() {
     }
 
     private fun generateSeats() {
-        // In a real app, this would be a fetch operation from a database
-        // Here we'll create some dummy seats for demonstration purposes
+        viewModelScope.launch {
+            try {
+                // Lấy danh sách ghế đã đặt
+                val bookedSeats = bookingRepository.getBookedSeats(showtimeId)
 
-        val rows = listOf("A", "B", "C", "D", "E", "F", "G", "H")
-        val seatsPerRow = 10
-        val seatsList = mutableListOf<SeatModel>()
+                val rows = listOf("A", "B", "C", "D", "E", "F", "G", "H")
+                val seatsPerRow = 10
+                val seatsList = mutableListOf<SeatModel>()
 
-        for (row in rows) {
-            for (number in 1..seatsPerRow) {
-                // Determine seat type based on row
-                val type = when {
-                    row in listOf("A", "B") -> SeatType.STANDARD
-                    row in listOf("C", "D", "E") -> SeatType.PREMIUM
-                    row == "F" -> SeatType.VIP
-                    else -> SeatType.COUPLE
+                for (row in rows) {
+                    for (number in 1..seatsPerRow) {
+                        // Determine seat type based on row
+                        val type = when {
+                            row in listOf("A", "B") -> SeatType.STANDARD
+                            row in listOf("C", "D", "E") -> SeatType.PREMIUM
+                            row == "F" -> SeatType.VIP
+                            else -> SeatType.COUPLE
+                        }
+
+                        // Tạo seatId theo định dạng showtimeId_row_number
+                        val seatId = "${showtimeId}_${row}_$number"
+                        
+                        // Kiểm tra xem ghế đã được đặt chưa
+                        val isAvailable = !bookedSeats.contains(seatId)
+
+                        seatsList.add(
+                            SeatModel(
+                                id = seatId,
+                                row = row,
+                                number = number,
+                                type = type,
+                                isAvailable = isAvailable,
+                                isSelected = false,
+                                screenId = _showtime.value?.screenId ?: "",
+                                showtimeId = showtimeId
+                            )
+                        )
+                    }
                 }
 
-                // Random availability
-                val isAvailable = if (row == "D" && number in 4..6) false else true
-
-                seatsList.add(
-                    SeatModel(
-                        id = "${showtimeId}_${row}_$number",
-                        row = row,
-                        number = number,
-                        type = type,
-                        isAvailable = isAvailable,
-                        isSelected = false,
-                        screenId = _showtime.value?.screenId ?: "",
-                        showtimeId = showtimeId
-                    )
-                )
+                _seats.value = seatsList
+            } catch (e: Exception) {
+                _errorMessage.value = "Error loading seats: ${e.message}"
             }
         }
-
-        _seats.value = seatsList
     }
 
     fun toggleSeatSelection(seat: SeatModel) {
@@ -219,15 +229,13 @@ class BookingViewModel(private val showtimeId: String) : ViewModel() {
     // Format time for display
     fun formatTime(timestamp: com.google.firebase.Timestamp?): String {
         if (timestamp == null) return ""
-        val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-        return sdf.format(timestamp.toDate())
+        return DateFormats.TIME.format(timestamp.toDate())
     }
 
     // Format date for display
     fun formatDate(timestamp: com.google.firebase.Timestamp?): String {
         if (timestamp == null) return ""
-        val sdf = SimpleDateFormat("EEE, dd MMM yyyy", Locale.getDefault())
-        return sdf.format(timestamp.toDate())
+        return DateFormats.SHORT_DATE.format(timestamp.toDate())
     }
 
     // Format price for display

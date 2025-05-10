@@ -38,7 +38,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.moviebooking.data.model.BookingModel
 import com.example.moviebooking.data.model.BookingStatus
 import com.example.moviebooking.ui.theme.AccentColor
 import com.example.moviebooking.ui.theme.DarkNavy
@@ -55,6 +59,12 @@ import com.example.moviebooking.ui.theme.ErrorColor
 import com.example.moviebooking.ui.theme.SuccessColor
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import java.text.SimpleDateFormat
+import java.util.*
+import com.example.moviebooking.data.repository.MovieRepository
+import com.example.moviebooking.data.repository.CinemaRepository
+import kotlinx.coroutines.launch
+import com.example.moviebooking.util.DateFormats
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -202,9 +212,38 @@ fun BookingsScreen(
 
 @Composable
 fun BookingItem(
-    booking: BookingListItemUiModel,
+    booking: BookingModel,
     onClick: () -> Unit
 ) {
+    val movieRepository = remember { MovieRepository() }
+    val cinemaRepository = remember { CinemaRepository() }
+    val coroutineScope = rememberCoroutineScope()
+    
+    var movieTitle by remember { mutableStateOf("Loading...") }
+    var cinemaName by remember { mutableStateOf("Loading...") }
+
+    LaunchedEffect(booking.movieId, booking.cinemaId) {
+        coroutineScope.launch {
+            // Lấy thông tin phim
+            movieRepository.getMovieById(booking.movieId)
+                .onSuccess { movie ->
+                    movieTitle = movie.title
+                }
+                .onFailure {
+                    movieTitle = "Unknown Movie"
+                }
+
+            // Lấy thông tin rạp
+            cinemaRepository.getCinemaById(booking.cinemaId)
+                .onSuccess { cinema ->
+                    cinemaName = cinema.name
+                }
+                .onFailure {
+                    cinemaName = "Unknown Cinema"
+                }
+        }
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -267,7 +306,7 @@ fun BookingItem(
                     Spacer(modifier = Modifier.width(8.dp))
 
                     Text(
-                        text = booking.movieTitle,
+                        text = movieTitle,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -290,7 +329,7 @@ fun BookingItem(
                     Spacer(modifier = Modifier.width(8.dp))
 
                     Text(
-                        text = booking.cinemaName,
+                        text = cinemaName,
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White
                     )
@@ -312,7 +351,9 @@ fun BookingItem(
                     Spacer(modifier = Modifier.width(8.dp))
 
                     Text(
-                        text = "${booking.date}, ${booking.time}",
+                        text = booking.bookingDate?.toDate()?.let {
+                            DateFormats.FULL_DATE_TIME.format(it)
+                        } ?: "Unknown Date",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White
                     )
@@ -339,14 +380,14 @@ fun BookingItem(
                         Spacer(modifier = Modifier.width(8.dp))
 
                         Text(
-                            text = booking.seats,
+                            text = "${booking.seats.size} seats",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White
                         )
                     }
 
                     Text(
-                        text = booking.totalAmount,
+                        text = String.format("%,.0f VND", booking.totalAmount),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = AccentColor

@@ -89,11 +89,23 @@ class BookingRepository {
                 .await()
 
             val bookings = snapshot.documents.mapNotNull { document ->
-                document.toObject(BookingModel::class.java)
+                try {
+                    document.toObject(BookingModel::class.java)
+                } catch (e: Exception) {
+                    null
+                }
             }
+            
+            if (bookings.isEmpty()) {
+                println("No bookings found for user ${currentUser.uid}")
+            } else {
+                println("Found ${bookings.size} bookings for user ${currentUser.uid}")
+            }
+            
             emit(bookings)
         } catch (e: Exception) {
-            emit(emptyList())
+            println("Error getting user bookings: ${e.message}")
+            throw e
         }
     }.flowOn(Dispatchers.IO)
 
@@ -152,6 +164,29 @@ class BookingRepository {
         }
     }
 
+    suspend fun confirmBooking(bookingId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            // Get the booking first
+            val bookingDoc = bookingsCollection.document(bookingId).get().await()
+            val booking = bookingDoc.toObject(BookingModel::class.java)
+                ?: throw Exception("Booking not found")
+
+            // Can only confirm PENDING bookings
+            if (booking.status != BookingStatus.PENDING) {
+                throw Exception("Cannot confirm a ${booking.status} booking")
+            }
+
+            // Update booking status to CONFIRMED
+            bookingsCollection.document(bookingId)
+                .update("status", BookingStatus.CONFIRMED.toString())
+                .await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun getShowtimeById(showtimeId: String): ShowtimeModel? = withContext(Dispatchers.IO) {
         try {
             val document = showtimesCollection.document(showtimeId).get().await()
@@ -176,6 +211,31 @@ class BookingRepository {
             document.toObject(CinemaModel::class.java)
         } catch (e: Exception) {
             null
+        }
+    }
+
+    suspend fun getBookedSeats(showtimeId: String): List<String> = withContext(Dispatchers.IO) {
+        try {
+            // Lấy tất cả các booking có showtimeId và status là CONFIRMED
+            val bookingsSnapshot = bookingsCollection
+                .whereEqualTo("showtimeId", showtimeId)
+                .whereEqualTo("status", BookingStatus.CONFIRMED.toString())
+                .get()
+                .await()
+
+            // Lấy tất cả seatId từ các booking
+            val bookedSeats = mutableListOf<String>()
+            bookingsSnapshot.documents.forEach { document ->
+                val booking = document.toObject(BookingModel::class.java)
+                booking?.seats?.let { seats ->
+                    bookedSeats.addAll(seats)
+                }
+            }
+
+            bookedSeats
+        } catch (e: Exception) {
+            println("Error getting booked seats: ${e.message}")
+            emptyList()
         }
     }
 }

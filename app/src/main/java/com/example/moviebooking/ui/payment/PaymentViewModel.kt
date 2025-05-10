@@ -120,10 +120,13 @@ class PaymentViewModel(
                     movieId = movieId,
                     cinemaId = cinemaId,
                     selectedSeats = selectedSeats.map { seatId ->
+                        // Tách seatId dạng "A1" thành row "A" và number "1"
+                        val row = seatId.first().toString()
+                        val number = seatId.substring(1)
                         SeatModel(
-                            id = "${showtimeId}_$seatId",
-                            row = seatId.first().toString(),
-                            number = seatId.substring(1).toInt(),
+                            id = "${showtimeId}_${row}_${number}",
+                            row = row,
+                            number = number.toInt(),
                             type = SeatType.STANDARD,
                             isAvailable = false,
                             isSelected = true,
@@ -136,8 +139,14 @@ class PaymentViewModel(
                 )
 
                 _bookingResult.value = result
-                result.onSuccess {
-                    _paymentState.value = PaymentState.Success(it.id)
+                result.onSuccess { booking ->
+                    // Confirm the booking after successful payment
+                    val confirmResult = bookingRepository.confirmBooking(booking.id)
+                    confirmResult.onSuccess {
+                        _paymentState.value = PaymentState.Success(booking.id)
+                    }.onFailure { error ->
+                        _errorMessage.value = error.message ?: "Failed to confirm booking"
+                    }
                 }.onFailure {
                     _errorMessage.value = it.message ?: "Payment failed"
                 }

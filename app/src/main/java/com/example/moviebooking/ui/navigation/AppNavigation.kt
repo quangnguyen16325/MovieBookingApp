@@ -12,12 +12,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.moviebooking.data.model.MovieModel
 import com.example.moviebooking.ui.about.AboutScreen
 import com.example.moviebooking.ui.auth.AuthViewModel
 import com.example.moviebooking.ui.auth.EmailVerificationScreen
 import com.example.moviebooking.ui.auth.ForgotPasswordScreen
 import com.example.moviebooking.ui.auth.LoginScreen
 import com.example.moviebooking.ui.auth.RegisterScreen
+import com.example.moviebooking.ui.cinema.CinemaScreen
 import com.example.moviebooking.ui.home.HomeScreen
 import com.example.moviebooking.ui.home.HomeViewModel
 import com.example.moviebooking.ui.movie.MovieDetailScreen
@@ -31,6 +33,9 @@ import com.example.moviebooking.ui.profile.ProfileScreenWrapper
 import com.example.moviebooking.ui.search.SearchScreen
 import com.example.moviebooking.ui.payment.PaymentScreen
 import com.example.moviebooking.ui.payment.PaymentViewModel
+import com.example.moviebooking.ui.cinema.CinemaViewModel
+import com.example.moviebooking.ui.movie.SeeAllMoviesScreen
+import com.example.moviebooking.ui.movie.SeeAllComingSoonScreen
 import kotlinx.coroutines.launch
 
 @Composable
@@ -40,11 +45,11 @@ fun AppNavigation(
     onNavigationIconClick: () -> Unit,
     onScreenChange: (Screen) -> Unit,
     navController: NavHostController = rememberNavController(),
-    authViewModel: AuthViewModel = viewModel()
+    authViewModel: AuthViewModel = viewModel(),
+    homeViewModel: HomeViewModel = viewModel(),
+    cinemaViewModel: CinemaViewModel = viewModel()
 ) {
     val coroutineScope = rememberCoroutineScope()
-
-    val homeViewModel: HomeViewModel = viewModel()
 
     // Monitor current back stack entry to track current screen
     val navBackStackEntry = navController.currentBackStackEntryAsState()
@@ -56,6 +61,7 @@ fun AppNavigation(
             currentRoute == Screen.Home.route -> onScreenChange(Screen.Home)
             currentRoute == Screen.Profile.route -> onScreenChange(Screen.Profile)
             currentRoute == Screen.Bookings.route -> onScreenChange(Screen.Bookings)
+            currentRoute == Screen.Cinemas.route -> onScreenChange(Screen.Cinemas)
             currentRoute.startsWith("movie_detail") -> onScreenChange(Screen.MovieDetail)
             currentRoute.startsWith("booking_seat") -> onScreenChange(Screen.BookingSeat)
             currentRoute.startsWith("booking_confirmation") -> onScreenChange(Screen.BookingConfirmation)
@@ -64,6 +70,8 @@ fun AppNavigation(
             currentRoute == Screen.Notifications.route -> onScreenChange(Screen.Notifications)
             currentRoute == Screen.About.route -> onScreenChange(Screen.About)
             currentRoute == Screen.Payment.route -> onScreenChange(Screen.Payment)
+            currentRoute == Screen.SeeAllMovies.route -> onScreenChange(Screen.SeeAllMovies)
+            currentRoute == Screen.SeeAllComingSoon.route -> onScreenChange(Screen.SeeAllComingSoon)
             else -> { /* Login, register, etc. stay as is */ }
         }
     }
@@ -117,6 +125,9 @@ fun AppNavigation(
                 onNavigateToNotifications = actions.navigateToNotifications,
                 onNavigateToBookings = actions.navigateToBookings,
                 onNavigationIconClick = onNavigationIconClick,
+                onNavigateToCinemas = actions.navigateToCinemas,
+                onNavigateToSeeAllMovies = actions.navigateToSeeAllMovies,
+                onNavigateToSeeAllComingSoon = actions.navigateToSeeAllComingSoon,
                 onLogout = {
                     coroutineScope.launch {
                         authViewModel.logout()
@@ -269,6 +280,45 @@ fun AppNavigation(
                 viewModel = paymentViewModel
             )
         }
+
+        composable(Screen.SeeAllMovies.route) {
+            val movies = navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.get<List<MovieModel>>("movies") ?: emptyList()
+            val title = navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.get<String>("title") ?: "Movies"
+
+            SeeAllMoviesScreen(
+                movies = movies,
+                onNavigateBack = { navController.navigateUp() },
+                onMovieClick = { movieId ->
+                    navController.navigate("movie_detail/$movieId")
+                },
+                title = title
+            )
+        }
+
+        composable(Screen.SeeAllComingSoon.route) {
+            val movies = navController.previousBackStackEntry?.savedStateHandle?.get<List<MovieModel>>("movies") ?: emptyList()
+            val title = navController.previousBackStackEntry?.savedStateHandle?.get<String>("title") ?: "Coming Soon"
+            SeeAllComingSoonScreen(
+                movies = movies,
+                onNavigateBack = { navController.navigateUp() },
+                onMovieClick = { movieId -> actions.navigateToMovieDetail(movieId) },
+                title = title
+            )
+        }
+
+        composable("cinemas") {
+            CinemaScreen(
+                onNavigateBack = { navController.navigateUp() },
+                onCinemaClick = { cinemaId ->
+                    navController.navigate("cinema_detail/$cinemaId")
+                },
+                viewModel = cinemaViewModel
+            )
+        }
     }
 }
 
@@ -291,6 +341,9 @@ sealed class Screen(val route: String) {
     object Notifications : Screen("notifications")
     object About : Screen("about")
     object Payment : Screen("payment")
+    object Cinemas : Screen("cinemas")
+    object SeeAllMovies : Screen("see_all_movies")
+    object SeeAllComingSoon : Screen("see_all_coming_soon")
 
     fun createRoute(vararg args: String): String {
         return buildString {
@@ -374,5 +427,21 @@ class AppNavigationActions(navController: NavHostController) {
 
     val navigateToPayment: () -> Unit = {
         navController.navigate(Screen.Payment.route)
+    }
+
+    val navigateToCinemas: () -> Unit = {
+        navController.navigate(Screen.Cinemas.route)
+    }
+
+    val navigateToSeeAllMovies: (List<MovieModel>, String) -> Unit = { movies, title ->
+        navController.currentBackStackEntry?.savedStateHandle?.set("movies", movies)
+        navController.currentBackStackEntry?.savedStateHandle?.set("title", title)
+        navController.navigate(Screen.SeeAllMovies.route)
+    }
+
+    val navigateToSeeAllComingSoon: (List<MovieModel>, String) -> Unit = { movies, title ->
+        navController.currentBackStackEntry?.savedStateHandle?.set("movies", movies)
+        navController.currentBackStackEntry?.savedStateHandle?.set("title", title)
+        navController.navigate(Screen.SeeAllComingSoon.route)
     }
 }

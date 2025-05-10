@@ -32,8 +32,8 @@ class BookingsViewModel : ViewModel() {
     private val movieRepository = MovieRepository()
     private val cinemaRepository = CinemaRepository()
 
-    private val _bookings = MutableStateFlow<List<BookingListItemUiModel>>(emptyList())
-    val bookings: StateFlow<List<BookingListItemUiModel>> = _bookings.asStateFlow()
+    private val _bookings = MutableStateFlow<List<BookingModel>>(emptyList())
+    val bookings: StateFlow<List<BookingModel>> = _bookings.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -51,63 +51,20 @@ class BookingsViewModel : ViewModel() {
             _errorMessage.value = null
 
             try {
+                println("Starting to load user bookings...")
                 bookingRepository.getUserBookings()
                     .catch { e ->
+                        println("Error in flow: ${e.message}")
                         _errorMessage.value = e.message ?: "Failed to load bookings"
                         _isLoading.value = false
                     }
                     .collect { bookingsList ->
-                        val uiModels = mutableListOf<BookingListItemUiModel>()
-
-                        for (booking in bookingsList) {
-                            try {
-                                // Get movie title
-                                val movieResult = movieRepository.getMovieById(booking.movieId)
-                                val movieTitle = movieResult.getOrNull()?.title ?: "Unknown Movie"
-
-                                // Get cinema name
-                                val cinemaResult = cinemaRepository.getCinemaById(booking.cinemaId)
-                                val cinemaName = cinemaResult.getOrNull()?.name ?: "Unknown Cinema"
-
-                                // Format date and time
-                                val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-                                val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-
-                                val dateStr = booking.bookingDate?.toDate()?.let {
-                                    dateFormat.format(it)
-                                } ?: "Unknown Date"
-
-                                val timeStr = booking.bookingDate?.toDate()?.let {
-                                    timeFormat.format(it)
-                                } ?: "Unknown Time"
-
-                                // Format seats
-                                val seatsStr = "${booking.seats.size} seats"
-
-                                // Format total amount
-                                val amountStr = String.format("%,.0f VND", booking.totalAmount)
-
-                                uiModels.add(
-                                    BookingListItemUiModel(
-                                        id = booking.id,
-                                        movieTitle = movieTitle,
-                                        cinemaName = cinemaName,
-                                        date = dateStr,
-                                        time = timeStr,
-                                        seats = seatsStr,
-                                        status = booking.status,
-                                        totalAmount = amountStr
-                                    )
-                                )
-                            } catch (e: Exception) {
-                                continue
-                            }
-                        }
-
-                        _bookings.value = uiModels
+                        println("Received ${bookingsList.size} bookings")
+                        _bookings.value = bookingsList
                         _isLoading.value = false
                     }
             } catch (e: Exception) {
+                println("Error loading bookings: ${e.message}")
                 _errorMessage.value = e.message ?: "An unexpected error occurred"
                 _isLoading.value = false
             }

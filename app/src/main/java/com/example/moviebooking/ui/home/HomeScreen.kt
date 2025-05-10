@@ -24,8 +24,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ConfirmationNumber
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -54,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -81,6 +84,9 @@ fun HomeScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToBookings: () -> Unit,
+    onNavigateToCinemas: () -> Unit,
+    onNavigateToSeeAllMovies: (List<MovieModel>, String) -> Unit,
+    onNavigateToSeeAllComingSoon: (List<MovieModel>, String) -> Unit,
     onNavigationIconClick: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
@@ -203,13 +209,13 @@ fun HomeScreen(
     ) { padding ->
         SwipeRefresh(
             state = rememberSwipeRefreshState(isRefreshing),
-            onRefresh = { isRefreshing = true }
+            onRefresh = { isRefreshing = true },
+            modifier = Modifier.padding(padding)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
-                    .background(DarkNavy)
+                    .background(backgroundColor)
                     .verticalScroll(rememberScrollState())
             ) {
                 // Featured Slider / Carousel
@@ -242,10 +248,11 @@ fun HomeScreen(
                 // Quick Access Card
                 QuickAccessCard(
                     onBookingsClick = onNavigateToBookings,
-                    onProfileClick = onNavigateToProfile
+                    onProfileClick = onNavigateToProfile,
+                    onCinemasClick = onNavigateToCinemas
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(0.dp))
 
                 // Now Showing Movies
                 MovieCarousel(
@@ -253,11 +260,11 @@ fun HomeScreen(
                     movies = nowShowingMovies,
                     isLoading = isNowShowingLoading,
                     onMovieClick = { onNavigateToMovieDetail(it.id) },
-                    onSeeAllClick = { /* Navigate to full now showing list */ },
+                    onSeeAllClick = { onNavigateToSeeAllMovies(nowShowingMovies, "Now Showing") },
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 // Coming Soon Movies
                 MovieCarousel(
@@ -265,7 +272,7 @@ fun HomeScreen(
                     movies = comingSoonMovies,
                     isLoading = isComingSoonLoading,
                     onMovieClick = { onNavigateToMovieDetail(it.id) },
-                    onSeeAllClick = { /* Navigate to full coming soon list */ },
+                    onSeeAllClick = { onNavigateToSeeAllComingSoon(comingSoonMovies, "Coming Soon") },
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
 
@@ -421,7 +428,8 @@ fun FeaturedMovieBanner(
 @Composable
 fun QuickAccessCard(
     onBookingsClick: () -> Unit,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    onCinemasClick: () -> Unit
 ) {
     val isDarkTheme = isSystemInDarkTheme()
     val cardBackgroundColor = if (!isDarkTheme) DarkNavyLight else SurfaceLight
@@ -469,7 +477,7 @@ fun QuickAccessCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_ticket),
+                            imageVector = Icons.Default.ConfirmationNumber,
                             contentDescription = "My Bookings",
                             tint = AccentColor,
                             modifier = Modifier.size(24.dp)
@@ -525,7 +533,7 @@ fun QuickAccessCard(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(8.dp))
-                        .clickable { }
+                        .clickable(onClick = onCinemasClick)
                         .padding(8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -537,7 +545,7 @@ fun QuickAccessCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.LocationOn,
+                            imageVector = Icons.Default.Movie,
                             contentDescription = "Find Cinemas",
                             tint = AccentColor,
                             modifier = Modifier.size(24.dp)

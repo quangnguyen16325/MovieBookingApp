@@ -83,6 +83,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+
     // Google Sign In
     implementation(libs.play.services.auth)
     // Facebook Sign In
@@ -97,4 +98,12 @@ dependencies {
     implementation(libs.accompanist.swiperefresh)
 
     implementation(libs.androidx.material.icons.extended.v170)
+
+    // Play media
+    implementation (libs.androidx.media3.exoplayer)
+    implementation (libs.androidx.media3.ui)
+    implementation (libs.androidx.media3.exoplayer.dash)
+
+    // Androidyoutubeplayer
+    implementation (libs.core)
 }

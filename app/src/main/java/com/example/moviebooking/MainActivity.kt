@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.ConfirmationNumber
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
@@ -138,20 +139,21 @@ fun MovieBookingApp() {
 //                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
 //                                modifier = Modifier.size(40.dp)
 //                            )
-                            Image(
-                                painter = painterResource(id = R.drawable.cineai_1),
-                                contentDescription = "App Logo",
-                                modifier = Modifier.size(40.dp)
-                            )
 
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            Text(
-                                text = "Cine AI",
-                                style = MaterialTheme.typography.headlineMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                fontWeight = FontWeight.Bold
-                            )
+//                            Image(
+//                                painter = painterResource(id = R.drawable.cineai_1),
+//                                contentDescription = "App Logo",
+//                                modifier = Modifier.size(40.dp)
+//                            )
+//
+//                            Spacer(modifier = Modifier.width(8.dp))
+//
+//                            Text(
+//                                text = "Cine AI",
+//                                style = MaterialTheme.typography.headlineMedium,
+//                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+//                                fontWeight = FontWeight.Bold
+//                            )
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -231,11 +233,35 @@ fun MovieBookingApp() {
                     label = "Home",
                     isSelected = currentScreen == Screen.Home,
                     onClick = {
-                        navigateToScreen(navController, Screen.Home.route, scope) {
+                        scope.launch {
                             drawerState.close()
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
                         }
-                    },
-                    tint = Color.White
+                    }
+                )
+
+                DrawerItem(
+                    icon = Icons.Default.Movie,
+                    label = "Cinemas",
+                    isSelected = currentScreen == Screen.Cinemas,
+                    onClick = {
+                        scope.launch {
+                            drawerState.close()
+                            navController.navigate(Screen.Cinemas.route) {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    }
                 )
 
                 DrawerItem(

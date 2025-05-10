@@ -91,17 +91,29 @@ class MovieRepository {
 
     suspend fun searchMovies(query: String): Flow<List<MovieModel>> = flow {
         try {
+            Log.d("MovieRepository", "Searching for: $query")
+            
+            // Lấy tất cả phim
             val snapshot = moviesCollection
-                .whereGreaterThanOrEqualTo("title", query)
-                .whereLessThanOrEqualTo("title", query + '\uf8ff')
                 .get()
                 .await()
 
+            // Lọc phim theo tiêu đề và thể loại
             val movies = snapshot.documents.mapNotNull { document ->
                 document.toObject(MovieModel::class.java)
+            }.filter { movie ->
+                // Tìm kiếm theo tiêu đề (không phân biệt chữ hoa/thường)
+                movie.title.contains(query, ignoreCase = true) ||
+                // Tìm kiếm theo thể loại (không phân biệt chữ hoa/thường)
+                movie.genres.any { genre ->
+                    genre.contains(query, ignoreCase = true)
+                }
             }
+
+            Log.d("MovieRepository", "Found ${movies.size} movies")
             emit(movies)
         } catch (e: Exception) {
+            Log.e("MovieRepository", "Error searching movies: ${e.message}", e)
             emit(emptyList())
         }
     }.flowOn(Dispatchers.IO)

@@ -21,6 +21,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import com.example.moviebooking.util.DateFormats
 
 class MovieDetailViewModel(private val movieId: String) : ViewModel() {
 
@@ -211,14 +212,12 @@ class MovieDetailViewModel(private val movieId: String) : ViewModel() {
     // Format timestamp to readable time
     fun formatTime(timestamp: Timestamp?): String {
         if (timestamp == null) return ""
-        val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-        return sdf.format(timestamp.toDate())
+        return DateFormats.TIME.format(timestamp.toDate())
     }
 
     // Format date to readable string
     fun formatDate(date: Date): String {
-        val sdf = SimpleDateFormat("EEE, dd MMM", Locale.getDefault())
-        return sdf.format(date)
+        return DateFormats.SHORT_DATE_NO_YEAR.format(date)
     }
 
     class Factory(private val movieId: String) : ViewModelProvider.Factory {

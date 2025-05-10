@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
+import com.example.moviebooking.util.DateFormats
 
 class ProfileViewModel : ViewModel() {
 
@@ -155,7 +156,6 @@ class ProfileViewModel : ViewModel() {
 
     fun formatDate(timestamp: Timestamp?): String {
         if (timestamp == null) return "N/A"
-        val sdf = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
-        return sdf.format(timestamp.toDate())
+        return DateFormats.FULL_DATE.format(timestamp.toDate())
     }
 }

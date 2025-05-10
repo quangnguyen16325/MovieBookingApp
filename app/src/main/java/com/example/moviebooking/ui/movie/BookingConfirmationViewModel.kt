@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
+import com.example.moviebooking.util.DateFormats
 
 data class BookingDetailsUiModel(
     val movieTitle: String,
@@ -90,12 +91,10 @@ class BookingConfirmationViewModel(private val bookingId: String) : ViewModel() 
             val showtimeResult = showtimeRepository.getShowtimeById(booking.showtimeId)
             val (dateStr, startTimeStr, endTimeStr) = if (showtimeResult.isSuccess) {
                 val showtime = showtimeResult.getOrNull()
-                val dateFormat = SimpleDateFormat("EEE, dd MMM yyyy", Locale.getDefault())
-                val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
-                val date = showtime?.date?.toDate()?.let { dateFormat.format(it) } ?: "Unknown Date"
-                val startTime = showtime?.startTime?.toDate()?.let { timeFormat.format(it) } ?: "Unknown"
-                val endTime = showtime?.endTime?.toDate()?.let { timeFormat.format(it) } ?: "Unknown"
+                val date = showtime?.date?.toDate()?.let { DateFormats.FULL_DATE.format(it) } ?: "Unknown Date"
+                val startTime = showtime?.startTime?.toDate()?.let { DateFormats.TIME.format(it) } ?: "Unknown"
+                val endTime = showtime?.endTime?.toDate()?.let { DateFormats.TIME.format(it) } ?: "Unknown"
 
                 Triple(date, startTime, endTime)
             } else {

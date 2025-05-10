@@ -33,35 +33,27 @@ class SearchViewModel : ViewModel() {
 
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query
-
-        // Cancel previous search job if exists
         searchJob?.cancel()
-
-        // If query is empty, clear results and return
-        if (query.isBlank()) {
-            _searchResults.value = emptyList()
-            return
-        }
-
-        // Debounce search to avoid excessive API calls
         searchJob = viewModelScope.launch {
+            if (query.isBlank()) {
+                _searchResults.value = emptyList()
+                return@launch
+            }
+            delay(300) // Debounce search
             _isSearching.value = true
-
-            // Add a small delay to wait for user to finish typing
-            delay(300)
-
             try {
                 movieRepository.searchMovies(query)
                     .catch { e ->
-                        _errorMessage.value = e.message ?: "Failed to search movies"
-                        _isSearching.value = false
+                        _errorMessage.value = e.message
+                        _searchResults.value = emptyList()
                     }
                     .collectLatest { movies ->
                         _searchResults.value = movies
-                        _isSearching.value = false
                     }
             } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "An unexpected error occurred"
+                _errorMessage.value = e.message
+                _searchResults.value = emptyList()
+            } finally {
                 _isSearching.value = false
             }
         }
@@ -70,6 +62,7 @@ class SearchViewModel : ViewModel() {
     fun clearResults() {
         _searchQuery.value = ""
         _searchResults.value = emptyList()
+        searchJob?.cancel()
     }
 
     fun clearError() {
