@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.Locale
+import java.util.*
 import com.example.moviebooking.util.DateFormats
 
 class BookingViewModel(private val showtimeId: String) : ViewModel() {
@@ -63,47 +63,33 @@ class BookingViewModel(private val showtimeId: String) : ViewModel() {
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
     init {
-        loadBookingDetails()
+        loadShowtimeDetails()
     }
 
-    private fun loadBookingDetails() {
+    private fun loadShowtimeDetails() {
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
 
             try {
-                // Load showtime details
-                val showtimeResult = showtimeRepository.getShowtimeById(showtimeId)
-                showtimeResult.onSuccess { showtimeData ->
-                    _showtime.value = showtimeData
+                // Load showtime
+                val showtime = showtimeRepository.getShowtime(showtimeId)
+                _showtime.value = showtime
 
-                    // Load movie details
-                    val movieResult = movieRepository.getMovieById(showtimeData.movieId)
-                    movieResult.onSuccess { movieData ->
-                        _movie.value = movieData
-                    }
-                    movieResult.onFailure { exception ->
-                        _errorMessage.value = "Failed to load movie details: ${exception.message}"
-                    }
+                // Load movie
+                val movie = movieRepository.getMovie(showtime.movieId)
+                _movie.value = movie
 
-                    // Load cinema details
-                    val cinemaResult = cinemaRepository.getCinemaById(showtimeData.cinemaId)
-                    cinemaResult.onSuccess { cinemaData ->
-                        _cinema.value = cinemaData
-                    }
-                    cinemaResult.onFailure { exception ->
-                        _errorMessage.value = "Failed to load cinema details: ${exception.message}"
-                    }
+                // Load cinema
+                val cinema = cinemaRepository.getCinema(showtime.cinemaId)
+                _cinema.value = cinema
 
-                    // Generate seats (in a real app, you would fetch this from the database)
-                    generateSeats()
-                }
-                showtimeResult.onFailure { exception ->
-                    _errorMessage.value = "Failed to load showtime details: ${exception.message}"
-                }
+                // Generate seats
+                generateSeats()
+
+                _isLoading.value = false
             } catch (e: Exception) {
-                _errorMessage.value = "An unexpected error occurred: ${e.message}"
-            } finally {
+                _errorMessage.value = e.message ?: "An unexpected error occurred"
                 _isLoading.value = false
             }
         }
@@ -116,7 +102,7 @@ class BookingViewModel(private val showtimeId: String) : ViewModel() {
                 val bookedSeats = bookingRepository.getBookedSeats(showtimeId)
 
                 val rows = listOf("A", "B", "C", "D", "E", "F", "G", "H")
-                val seatsPerRow = 10
+                val seatsPerRow = 9
                 val seatsList = mutableListOf<SeatModel>()
 
                 for (row in rows) {
@@ -160,29 +146,33 @@ class BookingViewModel(private val showtimeId: String) : ViewModel() {
     fun toggleSeatSelection(seat: SeatModel) {
         if (!seat.isAvailable) return
 
-        val updatedSeats = _seats.value.map {
-            if (it.id == seat.id) it.copy(isSelected = !it.isSelected) else it
-        }
-        _seats.value = updatedSeats
+        val currentSeats = _seats.value.toMutableList()
+        val index = currentSeats.indexOfFirst { it.id == seat.id }
+        if (index != -1) {
+            val updatedSeat = currentSeats[index].copy(isSelected = !currentSeats[index].isSelected)
+            currentSeats[index] = updatedSeat
+            _seats.value = currentSeats
 
-        _selectedSeats.value = updatedSeats.filter { it.isSelected }
-        updateTotalPrice()
+            // Update selected seats list
+            _selectedSeats.value = currentSeats.filter { it.isSelected }
+            
+            // Update total price
+            updateTotalPrice()
+        }
     }
 
     private fun updateTotalPrice() {
-        val showtime = _showtime.value ?: return
-        val basePrice = showtime.price
-
+        val basePrice = _showtime.value?.price ?: 0.0
         var total = 0.0
 
         _selectedSeats.value.forEach { seat ->
-            val priceMultiplier = when (seat.type) {
+            val multiplier = when (seat.type) {
                 SeatType.STANDARD -> 1.0
-                SeatType.PREMIUM -> 1.3
-                SeatType.VIP -> 1.8
-                SeatType.COUPLE -> 2.2
+                SeatType.PREMIUM -> 1.2
+                SeatType.VIP -> 1.5
+                SeatType.COUPLE -> 2.0
             }
-            total += basePrice * priceMultiplier
+            total += basePrice * multiplier
         }
 
         _totalPrice.value = total
@@ -229,13 +219,17 @@ class BookingViewModel(private val showtimeId: String) : ViewModel() {
     // Format time for display
     fun formatTime(timestamp: com.google.firebase.Timestamp?): String {
         if (timestamp == null) return ""
-        return DateFormats.TIME.format(timestamp.toDate())
+        val date = timestamp.toDate()
+        val formatter = SimpleDateFormat("hh:mm a", Locale.US)
+        return formatter.format(date)
     }
 
     // Format date for display
     fun formatDate(timestamp: com.google.firebase.Timestamp?): String {
         if (timestamp == null) return ""
-        return DateFormats.SHORT_DATE.format(timestamp.toDate())
+        val date = timestamp.toDate()
+        val formatter = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.US)
+        return formatter.format(date)
     }
 
     // Format price for display

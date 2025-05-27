@@ -209,15 +209,44 @@ class MovieDetailViewModel(private val movieId: String) : ViewModel() {
         _errorMessage.value = null
     }
 
-    // Format timestamp to readable time
+    // Format time for display
     fun formatTime(timestamp: Timestamp?): String {
         if (timestamp == null) return ""
-        return DateFormats.TIME.format(timestamp.toDate())
+        val date = timestamp.toDate()
+        val formatter = SimpleDateFormat("hh:mm a", Locale.US)
+        return formatter.format(date)
     }
 
-    // Format date to readable string
+    // Format date for display
     fun formatDate(date: Date): String {
-        return DateFormats.SHORT_DATE_NO_YEAR.format(date)
+        val formatter = SimpleDateFormat("EEE, MMM d", Locale.US)
+        return formatter.format(date)
+    }
+
+    // Format date for display in 2 lines
+    fun formatDateTwoLines(date: Date): String {
+        val dayFormatter = SimpleDateFormat("EEE", Locale.US)
+        val dateFormatter = SimpleDateFormat("MMM d", Locale.US)
+        return "${dayFormatter.format(date)},\n${dateFormatter.format(date)}"
+    }
+
+    // Format release date for display
+    fun formatReleaseDate(timestamp: Timestamp?): String {
+        if (timestamp == null) return ""
+        val date = timestamp.toDate()
+        val formatter = SimpleDateFormat("MMMM d, yyyy", Locale.US)
+        return formatter.format(date)
+    }
+
+    // Format duration for display
+    fun formatDuration(minutes: Int): String {
+        val hours = minutes / 60
+        val remainingMinutes = minutes % 60
+        return if (hours > 0) {
+            "$hours hr ${if (remainingMinutes > 0) "$remainingMinutes min" else ""}"
+        } else {
+            "$remainingMinutes min"
+        }
     }
 
     class Factory(private val movieId: String) : ViewModelProvider.Factory {

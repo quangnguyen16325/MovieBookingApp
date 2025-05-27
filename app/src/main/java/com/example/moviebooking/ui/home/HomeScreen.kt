@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.ConfirmationNumber
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
@@ -34,6 +35,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -87,16 +89,16 @@ fun HomeScreen(
     onNavigateToCinemas: () -> Unit,
     onNavigateToSeeAllMovies: (List<MovieModel>, String) -> Unit,
     onNavigateToSeeAllComingSoon: (List<MovieModel>, String) -> Unit,
+    onNavigateToChatBot: () -> Unit,
     onNavigationIconClick: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = viewModel()
 ) {
-    val isDarkTheme = isSystemInDarkTheme()
-    val backgroundColor = if (!isDarkTheme) DarkNavy else BackgroundLight
-    val surfaceColor = if (!isDarkTheme) DarkNavyLight else SurfaceLight
-    val textPrimaryColor = if (!isDarkTheme) Color.White else TextPrimaryLight
-    val textSecondaryColor = if (!isDarkTheme) Color.White.copy(alpha = 0.7f) else TextSecondaryLight
+    val backgroundColor = DarkNavy
+    val surfaceColor = DarkNavyLight
+    val textPrimaryColor = Color.White
+    val textSecondaryColor = Color.White.copy(alpha = 0.7f)
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -207,76 +209,96 @@ fun HomeScreen(
             )
         }
     ) { padding ->
-        SwipeRefresh(
-            state = rememberSwipeRefreshState(isRefreshing),
-            onRefresh = { isRefreshing = true },
-            modifier = Modifier.padding(padding)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(backgroundColor)
-                    .verticalScroll(rememberScrollState())
+            SwipeRefresh(
+                state = rememberSwipeRefreshState(isRefreshing),
+                onRefresh = { isRefreshing = true }
             ) {
-                // Featured Slider / Carousel
-                FeaturedMovieBanner(
-                    movies = nowShowingMovies.take(5),
-                    onMovieClick = { onNavigateToMovieDetail(it.id) }
-                )
-
-                // Chào mừng người dùng
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .fillMaxSize()
+                        .background(backgroundColor)
+                        .verticalScroll(rememberScrollState())
                 ) {
-                    Text(
-                        text = "Welcome back,",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            color = textSecondaryColor
-                        )
+                    // Featured Slider / Carousel
+                    FeaturedMovieBanner(
+                        movies = nowShowingMovies.take(5),
+                        onMovieClick = { onNavigateToMovieDetail(it.id) }
                     )
-                    Text(
-                        text = currentUser?.fullName ?: "Guest",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = textPrimaryColor
+
+                    // Chào mừng người dùng
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = "Welcome back,",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                color = textSecondaryColor
+                            )
                         )
+                        Text(
+                            text = currentUser?.fullName ?: "Guest",
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = textPrimaryColor
+                            )
+                        )
+                    }
+
+                    // Quick Access Card
+                    QuickAccessCard(
+                        onBookingsClick = onNavigateToBookings,
+                        onProfileClick = onNavigateToProfile,
+                        onCinemasClick = onNavigateToCinemas
                     )
+
+                    Spacer(modifier = Modifier.height(0.dp))
+
+                    // Now Showing Movies
+                    MovieCarousel(
+                        title = "Now Showing",
+                        movies = nowShowingMovies,
+                        isLoading = isNowShowingLoading,
+                        onMovieClick = { onNavigateToMovieDetail(it.id) },
+                        onSeeAllClick = { onNavigateToSeeAllMovies(nowShowingMovies, "Now Showing") },
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Coming Soon Movies
+                    MovieCarousel(
+                        title = "Coming Soon",
+                        movies = comingSoonMovies,
+                        isLoading = isComingSoonLoading,
+                        onMovieClick = { onNavigateToMovieDetail(it.id) },
+                        onSeeAllClick = { onNavigateToSeeAllComingSoon(comingSoonMovies, "Coming Soon") },
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
+            }
 
-                // Quick Access Card
-                QuickAccessCard(
-                    onBookingsClick = onNavigateToBookings,
-                    onProfileClick = onNavigateToProfile,
-                    onCinemasClick = onNavigateToCinemas
+            // Chat Bot Floating Button
+            FloatingActionButton(
+                onClick = onNavigateToChatBot,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+                containerColor = AccentColor,
+                contentColor = Color.White
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Chat,
+                    contentDescription = "Chat with AI Assistant"
                 )
-
-                Spacer(modifier = Modifier.height(0.dp))
-
-                // Now Showing Movies
-                MovieCarousel(
-                    title = "Now Showing",
-                    movies = nowShowingMovies,
-                    isLoading = isNowShowingLoading,
-                    onMovieClick = { onNavigateToMovieDetail(it.id) },
-                    onSeeAllClick = { onNavigateToSeeAllMovies(nowShowingMovies, "Now Showing") },
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Coming Soon Movies
-                MovieCarousel(
-                    title = "Coming Soon",
-                    movies = comingSoonMovies,
-                    isLoading = isComingSoonLoading,
-                    onMovieClick = { onNavigateToMovieDetail(it.id) },
-                    onSeeAllClick = { onNavigateToSeeAllComingSoon(comingSoonMovies, "Coming Soon") },
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
@@ -431,9 +453,11 @@ fun QuickAccessCard(
     onProfileClick: () -> Unit,
     onCinemasClick: () -> Unit
 ) {
-    val isDarkTheme = isSystemInDarkTheme()
-    val cardBackgroundColor = if (!isDarkTheme) DarkNavyLight else SurfaceLight
-    val textPrimaryColor = if (!isDarkTheme) Color.White else TextPrimaryLight
+//    val isDarkTheme = isSystemInDarkTheme()
+//    val cardBackgroundColor = if (!isDarkTheme) DarkNavyLight else SurfaceLight
+//    val textPrimaryColor = if (!isDarkTheme) Color.White else TextPrimaryLight
+    val cardBackgroundColor = DarkNavyLight
+    val textPrimaryColor = Color.White
 
     Card(
         modifier = Modifier

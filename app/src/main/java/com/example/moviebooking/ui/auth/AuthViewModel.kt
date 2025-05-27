@@ -60,6 +60,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val _needsEmailVerification = MutableStateFlow(false)
     val needsEmailVerification: StateFlow<Boolean> = _needsEmailVerification.asStateFlow()
 
+    private val _isAdmin = MutableStateFlow(false)
+    val isAdmin: StateFlow<Boolean> = _isAdmin.asStateFlow()
+
 //    private val _isEmailVerified = MutableStateFlow(false)
 //    val isEmailVerified: StateFlow<Boolean> = _isEmailVerified.asStateFlow()
 //
@@ -164,7 +167,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 // Kiểm tra và lấy URL ảnh đại diện từ Firebase User
                 val profileImageUrl = user.photoUrl?.toString()
 
-                // Lấy thời gian hiện tại (2025-05-06 09:55:37 UTC)
+                // Lấy thời gian hiện tại
                 val currentTime = Timestamp(Date())
 
                 // Firebase user to UserModel conversion
@@ -172,7 +175,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     uid = user.uid,
                     email = user.email ?: "",
                     fullName = user.displayName ?: "",
-                    profileImage = profileImageUrl, // Đảm bảo lưu URL ảnh đại diện
+                    profileImage = profileImageUrl,
                     phoneNumber = user.phoneNumber,
                     createdAt = null,
                     lastLogin = currentTime
@@ -184,22 +187,54 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 } else {
                     _currentUser.value = userModel
 
-                    // Update auth state based on email verification
+                    // Check admin status first
+                    checkAdminStatus(user.uid) { isAdmin ->
+                        if (isAdmin) {
+                            // Nếu là admin, cho phép đăng nhập mà không cần xác thực email
+                            authState = AuthState.AUTHENTICATED
+                            _needsEmailVerification.value = false
+                        } else {
+                            // Nếu không phải admin, kiểm tra xác thực email như bình thường
                     val isEmailVerified = user.isEmailVerified
                     authState = if (isEmailVerified) AuthState.AUTHENTICATED else AuthState.EMAIL_NOT_VERIFIED
                     _needsEmailVerification.value = !isEmailVerified
+                        }
+                    }
 
                     // Save updated user data to preferences
-                    saveUserToPreferences(userModel, isEmailVerified)
+                    saveUserToPreferences(userModel, true)
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Error retrieving user data: ${e.message}"
-                Log.e("AuthViewModel", "Error retrieving user data", e)
             }
         } ?: run {
             // Nếu không có người dùng Firebase hiện tại
             if (_currentUser.value == null) {
                 authState = AuthState.UNAUTHENTICATED
+                _isAdmin.value = false
+            }
+        }
+    }
+
+    private fun checkAdminStatus(userId: String, onComplete: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val db = FirebaseFirestore.getInstance()
+                val documentSnapshot = db.collection("admin").document(userId).get().await()
+                
+                if (documentSnapshot.exists()) {
+                    val role = documentSnapshot.getString("role")
+                    val isAdmin = role == "admin"
+                    _isAdmin.value = isAdmin
+                    onComplete(isAdmin)
+                } else {
+                    _isAdmin.value = false
+                    onComplete(false)
+                }
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "Error checking admin status", e)
+                _isAdmin.value = false
+                onComplete(false)
             }
         }
     }
@@ -239,6 +274,19 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     authState = if (isEmailVerified) AuthState.AUTHENTICATED else AuthState.EMAIL_NOT_VERIFIED
                     _needsEmailVerification.value = !isEmailVerified
 
+                    // Check admin status
+                    checkAdminStatus(userId) { isAdmin ->
+                        if (isAdmin) {
+                            // Nếu là admin, cho phép đăng nhập mà không cần xác thực email
+                            authState = AuthState.AUTHENTICATED
+                            _needsEmailVerification.value = false
+                        } else {
+                            // Nếu không phải admin, kiểm tra xác thực email như bình thường
+                            authState = if (isEmailVerified) AuthState.AUTHENTICATED else AuthState.EMAIL_NOT_VERIFIED
+                            _needsEmailVerification.value = !isEmailVerified
+                        }
+                    }
+
                     // Lưu dữ liệu vào SharedPreferences
                     saveUserToPreferences(userModel, isEmailVerified)
 
@@ -268,16 +316,26 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             result.onSuccess { user ->
                 // Cập nhật thời gian đăng nhập gần đây
                 val updatedUser = user.copy(
-                    lastLogin = Timestamp(Date()) // 2025-05-06 09:31:28 UTC
+                    lastLogin = Timestamp(Date())
                 )
                 _currentUser.value = updatedUser
 
+                // Check admin status first
+                checkAdminStatus(user.uid) { isAdmin ->
+                    if (isAdmin) {
+                        // Nếu là admin, cho phép đăng nhập mà không cần xác thực email
+                        authState = AuthState.AUTHENTICATED
+                        _needsEmailVerification.value = false
+                    } else {
+                        // Nếu không phải admin, kiểm tra xác thực email như bình thường
                 val isEmailVerified = repository.currentUser?.isEmailVerified == true
                 authState = if (isEmailVerified) AuthState.AUTHENTICATED else AuthState.EMAIL_NOT_VERIFIED
                 _needsEmailVerification.value = !isEmailVerified
+                    }
+                }
 
                 // Save user data to preferences
-                saveUserToPreferences(updatedUser, isEmailVerified)
+                saveUserToPreferences(updatedUser, true)
             }
 
             result.onFailure { exception ->

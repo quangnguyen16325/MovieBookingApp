@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.firebase.storage.ktx)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.firebase.messaging.ktx)
+    implementation(libs.androidx.benchmark.common)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -106,4 +107,15 @@ dependencies {
 
     // Androidyoutubeplayer
     implementation (libs.core)
+
+    // Cloudinary
+    implementation (libs.cloudinary.android)
+
+    // Gemini AI
+    implementation("com.google.ai.client.generativeai:generativeai:0.2.1")
+
+    // Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
 }

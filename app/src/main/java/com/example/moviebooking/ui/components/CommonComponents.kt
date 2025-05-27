@@ -69,7 +69,7 @@ fun MovieTextField(
         singleLine = true,
         shape = RoundedCornerShape(12.dp),
         colors = TextFieldDefaults.outlinedTextFieldColors(
-            containerColor = Color.Black.copy(alpha = 0.7f),
+            containerColor = DarkNavyLight,
             cursorColor = AccentColor,
             focusedBorderColor = AccentColor,
             unfocusedBorderColor = Color.White.copy(alpha = 0.3f),

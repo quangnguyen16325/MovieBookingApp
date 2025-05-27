@@ -58,11 +58,11 @@ fun CinemaScreen(
     modifier: Modifier = Modifier,
     viewModel: CinemaViewModel = viewModel()
 ) {
-    val isDarkTheme = isSystemInDarkTheme()
-    val backgroundColor = if (!isDarkTheme) DarkNavy else BackgroundLight
-    val surfaceColor = if (!isDarkTheme) DarkNavyLight else SurfaceLight
-    val textPrimaryColor = if (!isDarkTheme) Color.White else TextPrimaryLight
-    val textSecondaryColor = if (!isDarkTheme) Color.White.copy(alpha = 0.7f) else TextSecondaryLight
+    // Luôn sử dụng màu tối
+    val backgroundColor = DarkNavy
+    val surfaceColor = DarkNavyLight
+    val textPrimaryColor = Color.White
+    val textSecondaryColor = Color.White.copy(alpha = 0.7f)
 
     val cinemas by viewModel.cinemas.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -130,8 +130,7 @@ fun CinemaScreen(
                 items(cinemas) { cinema ->
                     CinemaCard(
                         cinema = cinema,
-//                        onClick = { onCinemaClick(cinema.id) },
-                        onClick = {  },
+                        onClick = { onCinemaClick(cinema.id) },
                         textPrimaryColor = textPrimaryColor,
                         textSecondaryColor = textSecondaryColor
                     )
@@ -154,7 +153,7 @@ fun CinemaCard(
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (!isSystemInDarkTheme()) DarkNavyLight else SurfaceLight
+            containerColor = DarkNavyLight
         ),
         shape = RoundedCornerShape(16.dp)
     ) {

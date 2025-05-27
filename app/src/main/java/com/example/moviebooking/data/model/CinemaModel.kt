@@ -9,7 +9,8 @@ data class CinemaModel(
     val city: String = "",
     val imageUrl: String = "",
     val facilities: List<String> = listOf(), // amenities like parking, food, etc.
-    val location: GeoLocation? = null
+    val location: GeoLocation? = null,
+    val numberOfScreens: Int = 0
 ) {
     fun toMap(): Map<String, Any?> {
         val map = mutableMapOf<String, Any?>()
@@ -18,6 +19,7 @@ data class CinemaModel(
         map["city"] = city
         map["imageUrl"] = imageUrl
         map["facilities"] = facilities
+        map["numberOfScreens"] = numberOfScreens
         location?.let {
             map["location"] = mapOf(
                 "latitude" to it.latitude,

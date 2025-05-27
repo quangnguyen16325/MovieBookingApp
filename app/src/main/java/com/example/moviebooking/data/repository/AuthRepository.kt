@@ -2,6 +2,7 @@ package com.example.moviebooking.data.repository
 
 import android.content.Context
 import android.content.Intent
+import com.example.moviebooking.data.model.MembershipLevel
 import com.example.moviebooking.data.model.UserModel
 import com.facebook.AccessToken
 import com.facebook.CallbackManager
@@ -27,6 +28,7 @@ import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import android.util.Log
 
 class AuthRepository {
     private val auth = FirebaseAuth.getInstance()
@@ -45,19 +47,39 @@ class AuthRepository {
             val user = authResult.user
 
             if (user != null) {
-                // Check if email is verified
-                if (!user.isEmailVerified) {
+                // Check admin status first
+                val adminDoc = firestore.collection("admin").document(user.uid).get().await()
+                val isAdmin = adminDoc.exists() && adminDoc.getString("role") == "admin"
+
+                // If not admin, check email verification
+                if (!isAdmin && !user.isEmailVerified) {
                     return@withContext Result.failure(Exception("Please verify your email before logging in. Check your inbox."))
                 }
 
-                // Update last login timestamp
+                // Get or create user data in Firestore
+                val userDoc = usersCollection.document(user.uid).get().await()
+                val userModel = if (userDoc.exists()) {
+                    // Update last login for existing user
                 usersCollection.document(user.uid)
                     .update("lastLogin", Timestamp.now())
                     .await()
-
-                // Get user data from Firestore
-                val documentSnapshot = usersCollection.document(user.uid).get().await()
-                val userModel = documentSnapshot.toObject(UserModel::class.java)
+                    userDoc.toObject(UserModel::class.java)
+                } else {
+                    // Create new user document
+                    val newUserModel = UserModel(
+                        uid = user.uid,
+                        email = user.email ?: "",
+                        fullName = user.displayName ?: "",
+                        profileImage = user.photoUrl?.toString(),
+                        phoneNumber = user.phoneNumber,
+                        createdAt = Timestamp.now(),
+                        lastLogin = Timestamp.now()
+                    )
+                    usersCollection.document(user.uid)
+                        .set(newUserModel.toMap())
+                        .await()
+                    newUserModel
+                }
 
                 if (userModel != null) {
                     Result.success(userModel)
@@ -88,7 +110,9 @@ class AuthRepository {
                     profileImage = "",
                     phoneNumber = "",
                     createdAt = Timestamp.now(),
-                    lastLogin = Timestamp.now()
+                    lastLogin = Timestamp.now(),
+                    membershipPoints = 0,
+                    membershipLevel = MembershipLevel.BASIC
                 )
 
                 // Save user data to Firestore
@@ -289,7 +313,9 @@ class AuthRepository {
             val currentUser = currentUser
             val userMap = hashMapOf<String, Any>(
                 "fullName" to userModel.fullName,
-                "phoneNumber" to (userModel.phoneNumber ?: "")
+                "phoneNumber" to (userModel.phoneNumber ?: ""),
+                "membershipPoints" to userModel.membershipPoints,
+                "membershipLevel" to userModel.membershipLevel.toString()
             )
 
             if (currentUser == null) {
@@ -304,6 +330,32 @@ class AuthRepository {
                 displayName = userModel.fullName
             }
             currentUser.updateProfile(profileUpdates).await()
+
+            return@withContext Result.success(Unit)
+        } catch (e: Exception) {
+            return@withContext Result.failure(e)
+        }
+    }
+
+    suspend fun updateUserByAdmin(userId: String, userModel: UserModel): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            // Kiểm tra xem người dùng hiện tại có phải là admin không
+            val currentUser = currentUser ?: return@withContext Result.failure(Exception("User not authenticated"))
+            val adminDoc = firestore.collection("admin").document(currentUser.uid).get().await()
+            
+            if (!adminDoc.exists() || adminDoc.getString("role") != "admin") {
+                return@withContext Result.failure(Exception("Unauthorized: Admin access required"))
+            }
+
+            val userMap = hashMapOf<String, Any>(
+                "fullName" to userModel.fullName,
+                "phoneNumber" to (userModel.phoneNumber ?: ""),
+                "membershipPoints" to userModel.membershipPoints,
+                "membershipLevel" to userModel.membershipLevel.toString()
+            )
+
+            // Update Firestore document
+            firestore.collection("users").document(userId).update(userMap).await()
 
             return@withContext Result.success(Unit)
         } catch (e: Exception) {
@@ -331,6 +383,33 @@ class AuthRepository {
             return@withContext Result.success(Unit)
         } catch (e: Exception) {
             return@withContext Result.failure(e)
+        }
+    }
+
+    suspend fun getAllUsers(): Result<List<UserModel>> = withContext(Dispatchers.IO) {
+        try {
+            val usersSnapshot = usersCollection.get().await()
+            val userList = usersSnapshot.documents.mapNotNull { doc ->
+                doc.toObject(UserModel::class.java)
+            }
+            Result.success(userList)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteUser(userId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            // Delete user document from Firestore
+            usersCollection.document(userId).delete().await()
+            
+            // Delete user from Firebase Auth
+            // Note: This requires admin privileges, so we'll just delete the Firestore document
+            // The user will still exist in Firebase Auth but won't have any data
+            
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 

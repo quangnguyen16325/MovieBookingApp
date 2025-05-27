@@ -92,7 +92,7 @@ class BookingConfirmationViewModel(private val bookingId: String) : ViewModel() 
             val (dateStr, startTimeStr, endTimeStr) = if (showtimeResult.isSuccess) {
                 val showtime = showtimeResult.getOrNull()
 
-                val date = showtime?.date?.toDate()?.let { DateFormats.FULL_DATE.format(it) } ?: "Unknown Date"
+                val date = showtime?.startTime?.toDate()?.let { DateFormats.FULL_DATE.format(it) } ?: "Unknown Date"
                 val startTime = showtime?.startTime?.toDate()?.let { DateFormats.TIME.format(it) } ?: "Unknown"
                 val endTime = showtime?.endTime?.toDate()?.let { DateFormats.TIME.format(it) } ?: "Unknown"
 

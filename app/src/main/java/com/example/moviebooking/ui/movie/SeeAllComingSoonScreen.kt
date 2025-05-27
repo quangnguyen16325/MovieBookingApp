@@ -48,11 +48,11 @@ fun SeeAllComingSoonScreen(
     onMovieClick: (String) -> Unit,
     title: String = "Coming Soon"
 ) {
-    val isDarkTheme = isSystemInDarkTheme()
-    val backgroundColor = if (!isDarkTheme) DarkNavy else BackgroundLight
-    val surfaceColor = if (!isDarkTheme) DarkNavyLight else SurfaceLight
-    val textPrimaryColor = if (!isDarkTheme) Color.White else TextPrimaryLight
-    val textSecondaryColor = if (!isDarkTheme) Color.White.copy(alpha = 0.7f) else TextSecondaryLight
+    // Luôn sử dụng màu tối
+    val backgroundColor = DarkNavy
+    val surfaceColor = DarkNavyLight
+    val textPrimaryColor = Color.White
+    val textSecondaryColor = Color.White.copy(alpha = 0.7f)
 
     // Đảm bảo danh sách phim không rỗng
     if (movies.isEmpty()) {
@@ -222,20 +222,13 @@ fun ComingSoonMovieCard(
     }
 
     Card(
-//        modifier = modifier
-//            .fillMaxWidth()
-//            .height(600.dp)
-//            .padding(16.dp)
-//            .clickable { onMovieClick(movie.id) },
-//        shape = RoundedCornerShape(24.dp),
-//        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         modifier = modifier
             .fillMaxWidth()
             .height(480.dp)
-            .clickable{ onMovieClick(movie.id) },
+            .clickable { onMovieClick(movie.id) },
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (!isSystemInDarkTheme()) DarkNavyLight else SurfaceLight
+            containerColor = DarkNavyLight
         ),
         shape = RoundedCornerShape(24.dp)
     ) {
@@ -352,29 +345,6 @@ fun ComingSoonMovieCard(
                         text = "${movie.duration} min",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.9f)
-                    )
-                }
-
-                // Notify Me Button
-                Button(
-                    onClick = { /* TODO: Implement notification */ },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = AccentColor
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(
-                        defaultElevation = 4.dp,
-                        pressedElevation = 8.dp
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(
-                        text = "Notify Me",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }

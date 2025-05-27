@@ -24,6 +24,7 @@ class BookingRepository {
     private val showtimesCollection = firestore.collection("showtimes")
     private val moviesCollection = firestore.collection("movies")
     private val cinemasCollection = firestore.collection("cinemas")
+    private val membershipRepository = MembershipRepository()
 
     suspend fun createBooking(
         showtimeId: String,
@@ -71,6 +72,11 @@ class BookingRepository {
 
             // Commit the batch
             batch.commit().await()
+
+            // Tích điểm sau khi đặt vé thành công
+            if (booking.status == BookingStatus.CONFIRMED) {
+                membershipRepository.addPoints(booking.totalAmount)
+            }
 
             // Return the created booking with the generated ID
             Result.success(booking.copy(id = bookingRef.id))
@@ -181,6 +187,9 @@ class BookingRepository {
                 .update("status", BookingStatus.CONFIRMED.toString())
                 .await()
 
+            // Tích điểm sau khi đặt vé thành công
+            membershipRepository.addPoints(booking.totalAmount)
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -236,6 +245,25 @@ class BookingRepository {
         } catch (e: Exception) {
             println("Error getting booked seats: ${e.message}")
             emptyList()
+        }
+    }
+
+    suspend fun updateBookingStatus(bookingId: String, status: BookingStatus): Result<BookingModel> = withContext(Dispatchers.IO) {
+        try {
+            val booking = getBookingById(bookingId).getOrThrow()
+            
+            // Nếu trạng thái chuyển sang CONFIRMED, tích điểm
+            if (status == BookingStatus.CONFIRMED && booking.status != BookingStatus.CONFIRMED) {
+                membershipRepository.addPoints(booking.totalAmount)
+            }
+
+            bookingsCollection.document(bookingId)
+                .update("status", status.toString())
+                .await()
+
+            Result.success(booking.copy(status = status))
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
@@ -38,6 +40,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -95,6 +98,7 @@ class MainActivity : ComponentActivity() {
 fun MovieBookingApp() {
     val authViewModel: AuthViewModel = viewModel()
     val currentUser by authViewModel.currentUser.collectAsState()
+    val isAdmin by authViewModel.isAdmin.collectAsState()
 
     val userState by authViewModel.currentUser.collectAsState()
     val profileImage = userState?.profileImage
@@ -112,109 +116,52 @@ fun MovieBookingApp() {
         drawerContent = {
             ModalDrawerSheet(
                 drawerContainerColor = DarkNavy,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(300.dp)
             ) {
-                // Drawer Header with logo and user info
+                // User Profile Section
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    DarkNavyLight.copy(alpha = 0.7f),
-                                    DarkNavyLight.copy(alpha = 0.9f)
-                                )
-                            )
-                        )
-                        .padding(24.dp)
+                        .background(DarkNavy)
+                        .padding(16.dp)
                 ) {
-                    Column {
-                        // App Logo
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-//                            Icon(
-//                                imageVector = Icons.Default.ConfirmationNumber,
-//                                contentDescription = null,
-//                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-//                                modifier = Modifier.size(40.dp)
-//                            )
-
-//                            Image(
-//                                painter = painterResource(id = R.drawable.cineai_1),
-//                                contentDescription = "App Logo",
-//                                modifier = Modifier.size(40.dp)
-//                            )
-//
-//                            Spacer(modifier = Modifier.width(8.dp))
-//
-//                            Text(
-//                                text = "Cine AI",
-//                                style = MaterialTheme.typography.headlineMedium,
-//                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-//                                fontWeight = FontWeight.Bold
-//                            )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // Profile Image
+                        if (profileImage != null) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(profileImage)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = "Profile Image",
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.AccountCircle,
+                                contentDescription = "Profile",
+                                modifier = Modifier.size(80.dp),
+                                tint = Color.White
+                            )
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                        // User Information
+                        // User Name
                         if (currentUser != null) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                // User profile picture
-                                if (profileImage.isNullOrEmpty()) {
-                                    // Fallback khi không có ảnh đại diện
-                                    Box(
-                                        modifier = Modifier
-                                            .size(64.dp)
-                                            .clip(CircleShape)
-                                            .background(MaterialTheme.colorScheme.primaryContainer),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.AccountCircle,
-                                            contentDescription = "Profile Picture",
-                                            modifier = Modifier.size(48.dp),
-                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                        )
-                                    }
-                                } else {
-                                    AsyncImage(
-                                        model = ImageRequest.Builder(LocalContext.current)
-                                            .data(profileImage)
-                                            .crossfade(true)
-                                            .placeholder(R.drawable.ic_default_user)
-                                            .error(R.drawable.ic_default_user)
-                                            .diskCachePolicy(CachePolicy.ENABLED)
-                                            .memoryCachePolicy(CachePolicy.ENABLED)
-                                            .build(),
-                                        contentDescription = "Profile Picture",
-                                        modifier = Modifier
-                                            .size(48.dp)
-                                            .clip(CircleShape),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(12.dp))
-
-                                Column {
-                                    Text(
-                                        text = currentUser?.fullName ?: "Guest User",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        fontWeight = FontWeight.Bold
-                                    )
-
-                                    Text(
-                                        text = currentUser?.email ?: "",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                    )
-                                }
-                            }
+                            Text(
+                                text = currentUser?.fullName ?: "",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
                         } else {
                             Text(
                                 text = "Guest User",
@@ -277,6 +224,18 @@ fun MovieBookingApp() {
                 )
 
                 DrawerItem(
+                    icon = Icons.Default.Star,
+                    label = "Membership",
+                    isSelected = currentScreen == Screen.Membership,
+                    onClick = {
+                        navigateToScreen(navController, Screen.Membership.route, scope) {
+                            drawerState.close()
+                        }
+                    },
+                    tint = Color.White
+                )
+
+                DrawerItem(
                     icon = Icons.Default.AccountCircle,
                     label = "Profile",
                     isSelected = currentScreen == Screen.Profile,
@@ -313,9 +272,22 @@ fun MovieBookingApp() {
                     tint = Color.White
                 )
 
-//                Button(onClick = { addSampleMovies() }) {
-//                    Text("Add Sample Movies")
-//                }
+                // Add Admin System item for admin users
+                if (isAdmin == true) {
+                    Divider(color = Color.White.copy(alpha = 0.2f))
+                    
+                    DrawerItem(
+                        icon = Icons.Default.Settings,
+                        label = "Admin System",
+                        isSelected = currentScreen == Screen.AdminDashboard,
+                        onClick = {
+                            navigateToScreen(navController, Screen.AdminDashboard.route, scope) {
+                                drawerState.close()
+                            }
+                        },
+                        tint = AccentColor
+                    )
+                }
 
                 Spacer(modifier = Modifier.weight(1f))
 
@@ -484,4 +456,33 @@ fun addSampleMovies() {
         .addOnFailureListener { e ->
             Log.e("Firebase", "Error adding coming soon movie", e)
         }
+}
+
+@Composable
+fun MainScreen(
+    viewModel: AuthViewModel,
+    onNavigateToLogin: () -> Unit,
+    onNavigateToRegister: () -> Unit,
+    onNavigateToEmailVerification: () -> Unit,
+    onNavigateToAdminDashboard: () -> Unit
+) {
+    val isAdmin by viewModel.isAdmin.collectAsState()
+    val authState by remember { mutableStateOf(viewModel.authState) }
+
+    LaunchedEffect(authState) {
+        when (authState) {
+            AuthViewModel.AuthState.AUTHENTICATED -> {
+                if (isAdmin) {
+                    onNavigateToAdminDashboard()
+                }
+            }
+            AuthViewModel.AuthState.UNAUTHENTICATED -> {
+                onNavigateToLogin()
+            }
+            AuthViewModel.AuthState.EMAIL_NOT_VERIFIED -> {
+                onNavigateToEmailVerification()
+            }
+            else -> {}
+        }
+    }
 }

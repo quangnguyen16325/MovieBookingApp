@@ -394,7 +394,7 @@ fun MovieDetailScreen(
                                     date = date,
                                     isSelected = isSelected,
                                     onDateSelected = { viewModel.selectDate(date) },
-                                    formattedDate = viewModel.formatDate(date)
+                                    formattedDate = viewModel.formatDateTwoLines(date)
                                 )
                             }
                         }

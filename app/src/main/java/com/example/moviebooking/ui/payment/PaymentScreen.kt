@@ -43,6 +43,9 @@ fun PaymentScreen(
     val formattedSeats by viewModel.formattedSeats.collectAsState()
     val formattedTotalAmount by viewModel.formattedTotalAmount.collectAsState()
     val selectedPaymentMethod by viewModel.selectedPaymentMethod.collectAsState()
+    val discountAmount by viewModel.discountAmount.collectAsState()
+    val membershipLevel by viewModel.membershipLevel.collectAsState()
+    val originalAmount by viewModel.originalAmount.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -117,6 +120,7 @@ fun PaymentScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
                 // Payment Summary Card
@@ -175,6 +179,93 @@ fun PaymentScreen(
 
                             Spacer(modifier = Modifier.height(16.dp))
 
+                            // Original Amount
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Original Amount",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White.copy(alpha = 0.7f)
+                                )
+
+                                Text(
+                                    text = String.format("%,.0f VND", originalAmount),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AccentColor
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Membership Discount
+                            if (discountAmount > 0) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(
+                                            text = "Membership Discount",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.White.copy(alpha = 0.7f)
+                                        )
+                                        Text(
+                                            text = "${membershipLevel.name} Member",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = AccentColor
+                                        )
+                                    }
+
+                                    Text(
+                                        text = "-${String.format("%,.0f VND", discountAmount)}",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = AccentColor
+                                    )
+                                }
+
+//                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+
+                            // Points to Earn
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = "Points to Earn",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.White.copy(alpha = 0.7f)
+                                    )
+                                    Text(
+                                        text = "10,000 VND = 1 point",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = AccentColor
+                                    )
+                                }
+
+                                Text(
+//                                    text = "+${String.format("%,.0f", (originalAmount - discountAmount) / 10000)} points",
+                                    text = "+${((originalAmount - discountAmount) / 10000).toInt()} points",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AccentColor
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Divider(color = Color.White.copy(alpha = 0.1f))
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
                             // Total Amount
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -211,38 +302,43 @@ fun PaymentScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Credit Card Option
-                PaymentMethodCard(
-                    title = "Credit Card",
-                    subtitle = "Pay with your credit card",
-                    icon = Icons.Default.CreditCard,
-                    isSelected = selectedPaymentMethod == PaymentViewModel.PaymentMethod.CREDIT_CARD,
-                    onClick = { viewModel.selectPaymentMethod(PaymentViewModel.PaymentMethod.CREDIT_CARD) }
-                )
+                // Payment Method Options
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Credit Card Option
+                    PaymentMethodCard(
+                        title = "Credit Card",
+                        subtitle = "Pay with your credit card",
+                        icon = Icons.Default.CreditCard,
+                        isSelected = selectedPaymentMethod == PaymentViewModel.PaymentMethod.CREDIT_CARD,
+                        onClick = { viewModel.selectPaymentMethod(PaymentViewModel.PaymentMethod.CREDIT_CARD) }
+                    )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                // Mobile Payment Option
-                PaymentMethodCard(
-                    title = "Mobile Payment",
-                    subtitle = "Pay with your mobile wallet",
-                    icon = Icons.Default.PhoneAndroid,
-                    isSelected = selectedPaymentMethod == PaymentViewModel.PaymentMethod.MOBILE_PAYMENT,
-                    onClick = { viewModel.selectPaymentMethod(PaymentViewModel.PaymentMethod.MOBILE_PAYMENT) }
-                )
+                    // Mobile Payment Option
+                    PaymentMethodCard(
+                        title = "Mobile Payment",
+                        subtitle = "Pay with your mobile wallet",
+                        icon = Icons.Default.PhoneAndroid,
+                        isSelected = selectedPaymentMethod == PaymentViewModel.PaymentMethod.MOBILE_PAYMENT,
+                        onClick = { viewModel.selectPaymentMethod(PaymentViewModel.PaymentMethod.MOBILE_PAYMENT) }
+                    )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                // Bank Transfer Option
-                PaymentMethodCard(
-                    title = "Bank Transfer",
-                    subtitle = "Pay via bank transfer",
-                    icon = Icons.Default.Payment,
-                    isSelected = selectedPaymentMethod == PaymentViewModel.PaymentMethod.BANK_TRANSFER,
-                    onClick = { viewModel.selectPaymentMethod(PaymentViewModel.PaymentMethod.BANK_TRANSFER) }
-                )
+                    // Bank Transfer Option
+                    PaymentMethodCard(
+                        title = "Bank Transfer",
+                        subtitle = "Pay via bank transfer",
+                        icon = Icons.Default.Payment,
+                        isSelected = selectedPaymentMethod == PaymentViewModel.PaymentMethod.BANK_TRANSFER,
+                        onClick = { viewModel.selectPaymentMethod(PaymentViewModel.PaymentMethod.BANK_TRANSFER) }
+                    )
+                }
 
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 // Pay Now Button
                 MovieButton(
@@ -251,6 +347,8 @@ fun PaymentScreen(
                     isLoading = isLoading,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }

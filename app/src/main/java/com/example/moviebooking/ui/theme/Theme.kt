@@ -49,45 +49,27 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun MovieBookingTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true,
     dynamicColor: Boolean = false,
     fontScale: FontScale = FontScale(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
-
-    // Áp dụng font scale
-    val typography = Typography.copy(
-        headlineMedium = Typography.headlineMedium.copy(fontSize = fontScale.headingSize),
-        titleMedium = Typography.titleMedium.copy(fontSize = fontScale.subheadingSize),
-        bodyMedium = Typography.bodyMedium.copy(fontSize = fontScale.bodySize),
-        bodySmall = Typography.bodySmall.copy(fontSize = fontScale.captionSize)
-    )
+    val colorScheme = DarkColorScheme
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = DarkNavy.toArgb()
-            window.navigationBarColor = DarkNavy.toArgb()
-//            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
-            // Đặt chữ/icons trên status bar và navigation bar thành màu sáng
-            WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
-            WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightNavigationBars = false
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
         }
     }
 
     CompositionLocalProvider(LocalFontScale provides fontScale) {
         MaterialTheme(
             colorScheme = colorScheme,
-            typography = typography,
+            typography = Typography,
+            shapes = Shapes,
             content = content
         )
     }

@@ -14,6 +14,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.moviebooking.data.model.MovieModel
 import com.example.moviebooking.ui.about.AboutScreen
+import com.example.moviebooking.ui.admin.AdminDashboardScreen
 import com.example.moviebooking.ui.auth.AuthViewModel
 import com.example.moviebooking.ui.auth.EmailVerificationScreen
 import com.example.moviebooking.ui.auth.ForgotPasswordScreen
@@ -36,7 +37,26 @@ import com.example.moviebooking.ui.payment.PaymentViewModel
 import com.example.moviebooking.ui.cinema.CinemaViewModel
 import com.example.moviebooking.ui.movie.SeeAllMoviesScreen
 import com.example.moviebooking.ui.movie.SeeAllComingSoonScreen
+import com.example.moviebooking.ui.membership.MembershipScreen
+import com.example.moviebooking.ui.admin.movie.AdminMoviesScreen
+import com.example.moviebooking.ui.admin.movie.AdminMovieFormScreen
+import com.example.moviebooking.ui.admin.movie.AdminMoviesViewModel
+import com.example.moviebooking.ui.admin.cinema.AdminCinemasScreen
+import com.example.moviebooking.ui.admin.cinema.AdminCinemaFormScreen
+import com.example.moviebooking.ui.admin.cinema.AdminCinemasViewModel
+import com.example.moviebooking.ui.admin.showtime.AdminShowtimeListScreen
+import com.example.moviebooking.ui.admin.showtime.AdminShowtimeFormScreen
+import com.example.moviebooking.ui.admin.showtime.AdminShowtimeFormViewModel
+import com.example.moviebooking.ui.admin.showtime.AdminShowtimeListViewModel
+import com.example.moviebooking.ui.admin.showtime.AdminShowtimeSeatsScreen
+import com.example.moviebooking.ui.admin.showtime.AdminShowtimeSeatsViewModel
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
+import com.example.moviebooking.ui.admin.user.AdminUsersScreen
+import com.example.moviebooking.ui.admin.user.AdminUsersViewModel
+import com.example.moviebooking.ui.admin.user.AdminUserFormScreen
+import com.example.moviebooking.ui.admin.membership.AdminMembershipScreen
+import com.example.moviebooking.ui.chat.ChatBotScreen
 
 @Composable
 fun AppNavigation(
@@ -72,6 +92,19 @@ fun AppNavigation(
             currentRoute == Screen.Payment.route -> onScreenChange(Screen.Payment)
             currentRoute == Screen.SeeAllMovies.route -> onScreenChange(Screen.SeeAllMovies)
             currentRoute == Screen.SeeAllComingSoon.route -> onScreenChange(Screen.SeeAllComingSoon)
+            currentRoute == Screen.Membership.route -> onScreenChange(Screen.Membership)
+            currentRoute == Screen.AdminDashboard.route -> onScreenChange(Screen.AdminDashboard)
+            currentRoute == Screen.AdminMovies.route -> onScreenChange(Screen.AdminMovies)
+            currentRoute == Screen.AdminMovieForm.route -> onScreenChange(Screen.AdminMovieForm)
+            currentRoute == Screen.AdminCinemas.route -> onScreenChange(Screen.AdminCinemas)
+            currentRoute == Screen.AdminCinemaForm.route -> onScreenChange(Screen.AdminCinemaForm)
+            currentRoute == Screen.AdminShowtimes.route -> onScreenChange(Screen.AdminShowtimes)
+            currentRoute == Screen.AdminShowtimeForm.route -> onScreenChange(Screen.AdminShowtimeForm)
+            currentRoute == Screen.AdminShowtimeSeats.route -> onScreenChange(Screen.AdminShowtimeSeats)
+            currentRoute == Screen.AdminUsers.route -> onScreenChange(Screen.AdminUsers)
+            currentRoute == Screen.AdminUserForm.route -> onScreenChange(Screen.AdminUserForm)
+            currentRoute == Screen.AdminMembership.route -> onScreenChange(Screen.AdminMembership)
+            currentRoute == Screen.ChatBot.route -> onScreenChange(Screen.ChatBot)
             else -> { /* Login, register, etc. stay as is */ }
         }
     }
@@ -87,6 +120,7 @@ fun AppNavigation(
                 onNavigateToHome = actions.navigateToHome,
                 onNavigateToForgotPassword = actions.navigateToForgotPassword,
                 onNavigateToEmailVerification = actions.navigateToEmailVerification,
+                onNavigateToAdminDashboard = actions.navigateToAdminDashboard,
                 onGoogleSignInClick = startGoogleSignIn,
                 onFacebookSignInClick = startFacebookSignIn
             )
@@ -128,6 +162,7 @@ fun AppNavigation(
                 onNavigateToCinemas = actions.navigateToCinemas,
                 onNavigateToSeeAllMovies = actions.navigateToSeeAllMovies,
                 onNavigateToSeeAllComingSoon = actions.navigateToSeeAllComingSoon,
+                onNavigateToChatBot = actions.navigateToChatBot,
                 onLogout = {
                     coroutineScope.launch {
                         authViewModel.logout()
@@ -205,6 +240,7 @@ fun AppNavigation(
                 onNavigateToBookings = actions.navigateToBookings,
                 onNavigateToLogin = actions.navigateToLogin,
                 onNavigateToAbout = actions.navigateToAbout,
+                onNavigateToMembership = actions.navigateToMembership,
                 onLogout = {
                     coroutineScope.launch {
                         authViewModel.logout()
@@ -310,6 +346,12 @@ fun AppNavigation(
             )
         }
 
+        composable(Screen.Membership.route) {
+            MembershipScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
         composable("cinemas") {
             CinemaScreen(
                 onNavigateBack = { navController.navigateUp() },
@@ -317,6 +359,146 @@ fun AppNavigation(
                     navController.navigate("cinema_detail/$cinemaId")
                 },
                 viewModel = cinemaViewModel
+            )
+        }
+
+        composable(Screen.AdminDashboard.route) {
+            AdminDashboardScreen(
+                onNavigateToMovies = { actions.navigateToAdminMovies() },
+                onNavigateToUsers = { actions.navigateToAdminUsers() },
+                onNavigateToBookings = { /* TODO: Implement booking management */ },
+                onNavigateToMembership = { actions.navigateToAdminMembership() },
+                onNavigateToShowtimes = { actions.navigateToAdminShowtimes() },
+                onNavigateToCinemas = { actions.navigateToAdminCinemas() },
+                onLogout = {
+                    coroutineScope.launch {
+                        authViewModel.logout()
+                        actions.navigateToLogin()
+                    }
+                }
+            )
+        }
+
+        composable(Screen.AdminMovies.route) {
+            val viewModel: AdminMoviesViewModel = viewModel()
+            AdminMoviesScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onAddMovie = { actions.navigateToAdminMovieForm("new") },
+                onEditMovie = { movieId -> actions.navigateToAdminMovieForm(movieId) },
+                onDeleteMovie = { movieId ->
+                    viewModel.deleteMovie(movieId)
+                }
+            )
+        }
+
+        composable(
+            route = Screen.AdminMovieForm.route,
+            arguments = listOf(navArgument("movieId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val movieId = backStackEntry.arguments?.getString("movieId") ?: "new"
+            AdminMovieFormScreen(
+                movieId = movieId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.AdminCinemas.route) {
+            val viewModel: AdminCinemasViewModel = viewModel()
+            AdminCinemasScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onAddCinema = { actions.navigateToAdminCinemaForm("new") },
+                onEditCinema = { cinemaId -> actions.navigateToAdminCinemaForm(cinemaId) },
+                onDeleteCinema = { cinemaId ->
+                    viewModel.deleteCinema(cinemaId)
+                }
+            )
+        }
+
+        composable(
+            route = Screen.AdminCinemaForm.route,
+            arguments = listOf(navArgument("cinemaId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val cinemaId = backStackEntry.arguments?.getString("cinemaId") ?: "new"
+            AdminCinemaFormScreen(
+                cinemaId = cinemaId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.AdminShowtimes.route) {
+            val viewModel: AdminShowtimeListViewModel = viewModel()
+            AdminShowtimeListScreen(
+                onNavigateToForm = { showtimeId -> actions.navigateToAdminShowtimeForm(showtimeId) },
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToSeats = { showtimeId -> actions.navigateToAdminShowtimeSeats(showtimeId) }
+            )
+        }
+
+        composable(
+            route = Screen.AdminShowtimeForm.route,
+            arguments = listOf(navArgument("showtimeId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val showtimeId = backStackEntry.arguments?.getString("showtimeId") ?: ""
+            val context = LocalContext.current
+            val adminShowtimeFormViewModel: AdminShowtimeFormViewModel = viewModel(
+                factory = AdminShowtimeFormViewModel.Factory(showtimeId, context)
+            )
+
+            AdminShowtimeFormScreen(
+                showtimeId = showtimeId,
+                onNavigateBack = { navController.popBackStack() },
+                viewModel = adminShowtimeFormViewModel
+            )
+        }
+
+        // Thêm màn hình AdminShowtimeSeatsScreen
+        composable(
+            route = Screen.AdminShowtimeSeats.route,
+            arguments = listOf(navArgument("showtimeId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val showtimeId = backStackEntry.arguments?.getString("showtimeId") ?: ""
+            val adminShowtimeSeatsViewModel: AdminShowtimeSeatsViewModel = viewModel(
+                factory = AdminShowtimeSeatsViewModel.Factory(showtimeId)
+            )
+
+            AdminShowtimeSeatsScreen(
+                showtimeId = showtimeId,
+                onNavigateBack = { navController.popBackStack() },
+                viewModel = adminShowtimeSeatsViewModel
+            )
+        }
+
+        composable(Screen.AdminUsers.route) {
+            val viewModel: AdminUsersViewModel = viewModel()
+            AdminUsersScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onEditUser = { userId -> actions.navigateToAdminUserForm(userId) },
+                onDeleteUser = { userId ->
+                    viewModel.deleteUser(userId)
+                }
+            )
+        }
+
+        composable(
+            route = Screen.AdminUserForm.route,
+            arguments = listOf(navArgument("userId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: "new"
+            AdminUserFormScreen(
+                userId = userId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.AdminMembership.route) {
+            AdminMembershipScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.ChatBot.route) {
+            ChatBotScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
@@ -344,6 +526,29 @@ sealed class Screen(val route: String) {
     object Cinemas : Screen("cinemas")
     object SeeAllMovies : Screen("see_all_movies")
     object SeeAllComingSoon : Screen("see_all_coming_soon")
+    object Membership : Screen("membership")
+    object AdminDashboard : Screen("admin_dashboard")
+    object AdminMovies : Screen("admin_movies")
+    object AdminMovieForm : Screen("admin_movie_form/{movieId}") {
+        fun createRoute(movieId: String = "new") = "admin_movie_form/$movieId"
+    }
+    object AdminCinemas : Screen("admin_cinemas")
+    object AdminCinemaForm : Screen("admin_cinema_form/{cinemaId}") {
+        fun createRoute(cinemaId: String) = "admin_cinema_form/$cinemaId"
+    }
+    object AdminShowtimes : Screen("admin_showtimes")
+    object AdminShowtimeForm : Screen("admin_showtime_form/{showtimeId}") {
+        fun createRoute(showtimeId: String = "new") = "admin_showtime_form/$showtimeId"
+    }
+    object AdminShowtimeSeats : Screen("admin_showtime_seats/{showtimeId}") {
+        fun createRoute(showtimeId: String) = "admin_showtime_seats/$showtimeId"
+    }
+    object AdminUsers : Screen("admin_users")
+    object AdminUserForm : Screen("admin_user_form/{userId}") {
+        fun createRoute(userId: String = "new") = "admin_user_form/$userId"
+    }
+    object AdminMembership : Screen("admin_membership")
+    object ChatBot : Screen("chatbot")
 
     fun createRoute(vararg args: String): String {
         return buildString {
@@ -381,6 +586,14 @@ class AppNavigationActions(navController: NavHostController) {
 
     val navigateToHome: () -> Unit = {
         navController.navigate(Screen.Home.route) {
+            popUpTo(navController.graph.id) {
+                inclusive = true
+            }
+        }
+    }
+
+    val navigateToAdminDashboard: () -> Unit = {
+        navController.navigate(Screen.AdminDashboard.route) {
             popUpTo(navController.graph.id) {
                 inclusive = true
             }
@@ -444,4 +657,68 @@ class AppNavigationActions(navController: NavHostController) {
         navController.currentBackStackEntry?.savedStateHandle?.set("title", title)
         navController.navigate(Screen.SeeAllComingSoon.route)
     }
+
+    val navigateToMembership: () -> Unit = {
+        navController.navigate(Screen.Membership.route)
+    }
+
+    val navigateToAdminMovies: () -> Unit = {
+        navController.navigate(Screen.AdminMovies.route)
+    }
+
+    val navigateToAdminMovieForm: (String) -> Unit = { movieId ->
+        navController.navigate(Screen.AdminMovieForm.createRoute(movieId))
+    }
+
+    val navigateToAdminCinemas: () -> Unit = {
+        navController.navigate(Screen.AdminCinemas.route)
+    }
+
+    val navigateToAdminCinemaForm: (String) -> Unit = { cinemaId ->
+        navController.navigate(Screen.AdminCinemaForm.createRoute(cinemaId))
+    }
+
+    val navigateToAdminShowtimes: () -> Unit = {
+        navController.navigate(Screen.AdminShowtimes.route)
+    }
+
+    val navigateToAdminShowtimeForm: (String) -> Unit = { showtimeId ->
+        navController.navigate(Screen.AdminShowtimeForm.createRoute(showtimeId))
+    }
+
+    val navigateToAdminShowtimeSeats: (String) -> Unit = { showtimeId ->
+        navController.navigate(Screen.AdminShowtimeSeats.createRoute(showtimeId))
+    }
+
+    val navigateToAdminUsers: () -> Unit = {
+        navController.navigate(Screen.AdminUsers.route)
+    }
+
+    val navigateToAdminUserForm: (String) -> Unit = { userId ->
+        navController.navigate(Screen.AdminUserForm.createRoute(userId))
+    }
+
+    val navigateToAdminMembership: () -> Unit = {
+        navController.navigate(Screen.AdminMembership.route)
+    }
+
+    val navigateToChatBot: () -> Unit = {
+        navController.navigate(Screen.ChatBot.route)
+    }
+}
+
+@Composable
+private fun AdminMoviesScreen(
+    onNavigateBack: () -> Unit,
+    onAddMovie: () -> Unit,
+    onEditMovie: (String) -> Unit,
+    onDeleteMovie: (String) -> Unit
+) {
+    val viewModel: AdminMoviesViewModel = viewModel()
+    AdminMoviesScreen(
+        onNavigateBack = onNavigateBack,
+        onAddMovie = onAddMovie,
+        onEditMovie = onEditMovie,
+        onDeleteMovie = onDeleteMovie
+    )
 }

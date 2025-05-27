@@ -70,4 +70,9 @@ class CinemaRepository {
             Result.failure(e)
         }
     }
+
+    suspend fun getCinema(cinemaId: String): CinemaModel {
+        val document = cinemasCollection.document(cinemaId).get().await()
+        return document.toObject(CinemaModel::class.java) ?: throw Exception("Cinema not found")
+    }
 }

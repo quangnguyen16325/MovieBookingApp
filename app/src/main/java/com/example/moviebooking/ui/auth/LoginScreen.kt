@@ -55,6 +55,7 @@ fun LoginScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToForgotPassword: () -> Unit,
     onNavigateToEmailVerification: () -> Unit,
+    onNavigateToAdminDashboard: () -> Unit,
     onGoogleSignInClick: () -> Unit,
     onFacebookSignInClick: () -> Unit
 ) {
@@ -92,14 +93,22 @@ fun LoginScreen(
     }
 
     // Handle authentication state changes
+    val isAdmin by viewModel.isAdmin.collectAsState()
+
     LaunchedEffect(viewModel.authState) {
         when (viewModel.authState) {
             AuthState.AUTHENTICATED -> {
+                if (isAdmin) {
+                    onNavigateToAdminDashboard()
+                } else {
                 onNavigateToHome()
+                }
                 viewModel.resetAuthState()
             }
             AuthState.EMAIL_NOT_VERIFIED -> {
+                if (!isAdmin) {
                 onNavigateToEmailVerification()
+                }
                 viewModel.resetAuthState()
             }
             AuthState.ERROR -> {

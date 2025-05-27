@@ -9,7 +9,9 @@ import com.example.moviebooking.data.model.CinemaModel
 import com.example.moviebooking.data.model.ShowtimeModel
 import com.example.moviebooking.data.model.SeatModel
 import com.example.moviebooking.data.model.SeatType
+import com.example.moviebooking.data.model.MembershipLevel
 import com.example.moviebooking.data.repository.BookingRepository
+import com.example.moviebooking.data.repository.MembershipRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +25,7 @@ class PaymentViewModel(
 ) : ViewModel() {
 
     private val bookingRepository = BookingRepository()
+    private val membershipRepository = MembershipRepository()
 
     // Payment state
     private val _paymentState = MutableStateFlow<PaymentState>(PaymentState.Initial)
@@ -55,6 +58,19 @@ class PaymentViewModel(
     private val _bookingResult = MutableStateFlow<Result<BookingModel>?>(null)
     val bookingResult: StateFlow<Result<BookingModel>?> = _bookingResult.asStateFlow()
 
+    // Membership discount
+    private val _discountAmount = MutableStateFlow(0.0)
+    val discountAmount: StateFlow<Double> = _discountAmount.asStateFlow()
+
+    private val _finalAmount = MutableStateFlow(totalPrice)
+    val finalAmount: StateFlow<Double> = _finalAmount.asStateFlow()
+
+    private val _originalAmount = MutableStateFlow(totalPrice)
+    val originalAmount: StateFlow<Double> = _originalAmount.asStateFlow()
+
+    private val _membershipLevel = MutableStateFlow<MembershipLevel>(MembershipLevel.BASIC)
+    val membershipLevel: StateFlow<MembershipLevel> = _membershipLevel.asStateFlow()
+
     // Store booking details
     private var movieId: String = ""
     private var cinemaId: String = ""
@@ -66,11 +82,38 @@ class PaymentViewModel(
             "${seat.first()}${seat.substring(1)}"
         }
         
-        // Format total amount
-        _formattedTotalAmount.value = String.format("%,.0f VND", totalPrice)
-        
-        // Load booking details
+        // Load booking details and calculate discount
         loadBookingDetails()
+        calculateMembershipDiscount()
+    }
+
+    private fun calculateMembershipDiscount() {
+        viewModelScope.launch {
+            try {
+                val membershipResult = membershipRepository.getUserMembershipInfo()
+                membershipResult.onSuccess { userModel ->
+                    _membershipLevel.value = userModel.membershipLevel
+                    
+                    // Calculate discount based on membership level
+                    val discountPercentage = when (userModel.membershipLevel) {
+                        MembershipLevel.BASIC -> 0.0
+                        MembershipLevel.SILVER -> 0.10 // 10%
+                        MembershipLevel.GOLD -> 0.15 // 15%
+                        MembershipLevel.DIAMOND -> 0.25 // 25%
+                        MembershipLevel.PREMIUM -> 1.0 // 100%
+                    }
+                    
+                    _discountAmount.value = totalPrice * discountPercentage
+                    _finalAmount.value = totalPrice - _discountAmount.value
+                    _originalAmount.value = totalPrice
+                    
+                    // Update formatted total amount with discount
+                    _formattedTotalAmount.value = String.format("%,.0f VND", _finalAmount.value)
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Failed to calculate membership discount"
+            }
+        }
     }
 
     fun selectPaymentMethod(method: PaymentMethod) {
@@ -134,7 +177,7 @@ class PaymentViewModel(
                             showtimeId = showtimeId
                         )
                     },
-                    totalAmount = totalPrice,
+                    totalAmount = _finalAmount.value, // Use discounted amount
                     paymentMethod = _selectedPaymentMethod.value.toString()
                 )
 

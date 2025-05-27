@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,9 +29,11 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -71,6 +74,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.moviebooking.R
+import com.example.moviebooking.data.model.MembershipLevel
 import com.example.moviebooking.ui.auth.AuthViewModel
 import com.example.moviebooking.ui.components.MovieButton
 import com.example.moviebooking.ui.components.MovieTextField
@@ -84,6 +88,7 @@ fun ProfileScreenWrapper(
     onNavigateToBookings: () -> Unit,
     onNavigateToLogin: () -> Unit,
     onNavigateToAbout: () -> Unit,
+    onNavigateToMembership: () -> Unit,
     onLogout: () -> Unit
 ) {
     val currentUser by authViewModel.currentUser.collectAsState()
@@ -99,6 +104,7 @@ fun ProfileScreenWrapper(
             onBackClick = onBackClick,
             onNavigateToBookings = onNavigateToBookings,
             onNavigateToAbout = onNavigateToAbout,
+            onNavigateToMembership = onNavigateToMembership,
             onLogout = onLogout
         )
     }
@@ -110,6 +116,7 @@ fun ProfileScreen(
     onBackClick: () -> Unit,
     onNavigateToBookings: () -> Unit,
     onNavigateToAbout: () -> Unit,
+    onNavigateToMembership: () -> Unit,
     onLogout: () -> Unit,
     viewModel: ProfileViewModel = viewModel()
 ) {
@@ -232,20 +239,46 @@ fun ProfileScreen(
                         ) {
                             // Profile Image
                             Box {
-                                Image(
-                                    painter = rememberAsyncImagePainter(
-                                        ImageRequest.Builder(LocalContext.current)
-                                            .data(data = userProfile?.profileImage ?: R.drawable.ic_default_user)
-                                            .crossfade(true)
-                                            .build()
-                                    ),
-                                    contentDescription = "Profile Picture",
+                                val borderColor = when (userProfile?.membershipLevel) {
+                                    MembershipLevel.BASIC -> Color.Gray
+                                    MembershipLevel.SILVER -> Color.LightGray
+                                    MembershipLevel.GOLD -> Color(0xFFFFD700) // Gold color
+                                    MembershipLevel.DIAMOND -> Color(0xFFB9F2FF) // Diamond color
+                                    MembershipLevel.PREMIUM -> Color(0xFFC0392B) // Premium color
+                                    else -> Color.Gray
+                                }
+
+                                val borderWidth = when (userProfile?.membershipLevel) {
+                                    MembershipLevel.BASIC -> 2.dp
+                                    MembershipLevel.SILVER -> 2.dp
+                                    MembershipLevel.GOLD -> 2.dp
+                                    MembershipLevel.DIAMOND -> 2.dp
+                                    MembershipLevel.PREMIUM -> 2.dp
+                                    else -> 2.dp
+                                }
+
+                                Box(
                                     modifier = Modifier
                                         .size(100.dp)
                                         .clip(CircleShape)
-                                        .shadow(8.dp, CircleShape),
-                                    contentScale = ContentScale.Crop
-                                )
+                                        .background(borderColor)
+                                        .padding(borderWidth)
+                                ) {
+                                    Image(
+                                        painter = rememberAsyncImagePainter(
+                                            ImageRequest.Builder(LocalContext.current)
+                                                .data(data = userProfile?.profileImage ?: R.drawable.ic_default_user)
+                                                .crossfade(true)
+                                                .build()
+                                        ),
+                                        contentDescription = "Profile Picture",
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(CircleShape)
+                                            .shadow(8.dp, CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
 
                                 // Edit Icon
                                 Box(
@@ -278,16 +311,51 @@ fun ProfileScreen(
 
                             Spacer(modifier = Modifier.height(4.dp))
 
-                            // Email
+                            // Membership Level
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+//                                Icon(
+//                                    imageVector = Icons.Default.Star,
+//                                    contentDescription = "Membership Level",
+//                                    tint = when (userProfile?.membershipLevel) {
+//                                        MembershipLevel.BASIC -> Color.Gray
+//                                        MembershipLevel.SILVER -> Color.LightGray
+//                                        MembershipLevel.GOLD -> Color(0xFFFFD700) // Gold color
+//                                        MembershipLevel.DIAMOND -> Color(0xFFB9F2FF) // Diamond color
+//                                        MembershipLevel.PREMIUM -> Color(0xFFFF69B4) // Pink color for Premium
+//                                        else -> Color.Gray
+//                                    },
+//                                    modifier = Modifier.size(20.dp)
+//                                )
+//                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "${userProfile?.membershipLevel?.name} Member",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = when (userProfile?.membershipLevel) {
+                                        MembershipLevel.BASIC -> Color.Gray
+                                        MembershipLevel.SILVER -> Color.LightGray
+                                        MembershipLevel.GOLD -> Color(0xFFFFD700) // Gold color
+                                        MembershipLevel.DIAMOND -> Color(0xFFB9F2FF) // Diamond color
+                                        MembershipLevel.PREMIUM -> Color(0xFFC0392B) // Pink color for Premium
+                                        else -> Color.Gray
+                                    }
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            // Membership Points
                             Text(
-                                text = userProfile?.email ?: "",
+                                text = "${userProfile?.membershipPoints} points",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.White.copy(alpha = 0.7f)
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+//                    Spacer(modifier = Modifier.height(16.dp))
 
                     // Profile Info Card
                     Card(
@@ -367,6 +435,18 @@ fun ProfileScreen(
                                     icon = Icons.Default.ConfirmationNumber,
                                     title = "My Bookings",
                                     onClick = onNavigateToBookings
+                                )
+
+                                Divider(
+                                    color = Color.White.copy(alpha = 0.1f),
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
+
+                                // Membership
+                                ActionItem(
+                                    icon = Icons.Default.Star,
+                                    title = "Membership",
+                                    onClick = onNavigateToMembership
                                 )
 
                                 Divider(

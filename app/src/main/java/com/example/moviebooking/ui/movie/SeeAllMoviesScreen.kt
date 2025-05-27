@@ -44,11 +44,11 @@ fun SeeAllMoviesScreen(
     onMovieClick: (String) -> Unit,
     title: String = "Now Showing"
 ) {
-    val isDarkTheme = isSystemInDarkTheme()
-    val backgroundColor = if (!isDarkTheme) DarkNavy else BackgroundLight
-    val surfaceColor = if (!isDarkTheme) DarkNavyLight else SurfaceLight
-    val textPrimaryColor = if (!isDarkTheme) Color.White else TextPrimaryLight
-    val textSecondaryColor = if (!isDarkTheme) Color.White.copy(alpha = 0.7f) else TextSecondaryLight
+    // Luôn sử dụng màu tối
+    val backgroundColor = DarkNavy
+    val surfaceColor = DarkNavyLight
+    val textPrimaryColor = Color.White
+    val textSecondaryColor = Color.White.copy(alpha = 0.7f)
 
     // Đảm bảo danh sách phim không rỗng
     if (movies.isEmpty()) {
@@ -136,8 +136,8 @@ fun SeeAllMoviesScreen(
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 60.dp),
-                pageSpacing = 16.dp
+                contentPadding = PaddingValues(horizontal = 40.dp),
+                pageSpacing = 24.dp
             ) { page ->
                 // Tính toán actualIndex an toàn
                 val actualIndex = (page % movies.size).coerceAtLeast(0)
@@ -147,7 +147,7 @@ fun SeeAllMoviesScreen(
                 ).absoluteValue
 
                 val scale = lerp(
-                    start = 0.7f,
+                    start = 0.85f,
                     stop = 1f,
                     fraction = 1f - pageOffset.coerceIn(0f, 1f)
                 )
@@ -215,7 +215,7 @@ fun MovieCard(
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (!isSystemInDarkTheme()) DarkNavyLight else SurfaceLight
+            containerColor = DarkNavyLight
         ),
         shape = RoundedCornerShape(24.dp)
     ) {
@@ -254,16 +254,21 @@ fun MovieCard(
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(20.dp)
+                    .padding(24.dp)
+                    .fillMaxWidth()
             ) {
                 // Rating Badge
-                Surface(
-                    color = AccentColor,
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.padding(bottom = 6.dp)
+                Card(
+                    modifier = Modifier
+                        .padding(bottom = 4.dp)
+                        .align(Alignment.Start),
+                    colors = CardDefaults.cardColors(
+                        containerColor = AccentColor
+                    ),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
@@ -272,17 +277,19 @@ fun MovieCard(
                             tint = Color.White,
                             modifier = Modifier.size(15.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = String.format("%.1f", movie.rating),
+                            text = movie.rating.toString(),
                             style = MaterialTheme.typography.titleSmall,
                             color = Color.White,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
 
-                // Movie Title with Shadow
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Movie Title
                 Text(
                     text = movie.title,
                     style = MaterialTheme.typography.headlineSmall.copy(

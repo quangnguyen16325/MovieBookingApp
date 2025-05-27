@@ -10,7 +10,9 @@ data class UserModel(
     val profileImage: String? = null,
     val phoneNumber: String? = null,
     val createdAt: Timestamp? = null,
-    val lastLogin: Timestamp? = null
+    val lastLogin: Timestamp? = null,
+    val membershipPoints: Int = 0,
+    val membershipLevel: MembershipLevel = MembershipLevel.BASIC
 ) {
     fun toMap(): Map<String, Any?> {
         val map = mutableMapOf<String, Any?>()
@@ -20,7 +22,28 @@ data class UserModel(
         map["phoneNumber"] = phoneNumber
         map["createdAt"] = createdAt ?: Timestamp.now()
         map["lastLogin"] = Timestamp.now()
+        map["membershipPoints"] = membershipPoints
+        map["membershipLevel"] = membershipLevel.toString()
 
         return map
+    }
+}
+
+enum class MembershipLevel {
+    BASIC,
+    SILVER,
+    GOLD,
+    DIAMOND,
+    PREMIUM;
+
+    companion object {
+        fun fromPoints(points: Int): MembershipLevel {
+            return when {
+                points >= 1200 -> DIAMOND
+                points >= 600 -> GOLD
+                points >= 200 -> SILVER
+                else -> BASIC
+            }
+        }
     }
 }

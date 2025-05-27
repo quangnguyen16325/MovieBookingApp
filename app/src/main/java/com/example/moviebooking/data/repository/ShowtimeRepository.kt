@@ -17,6 +17,23 @@ class ShowtimeRepository {
     private val firestore = FirebaseFirestore.getInstance()
     private val showtimesCollection = firestore.collection("showtimes")
 
+    suspend fun getAllShowtimes(): Result<List<ShowtimeModel>> = withContext(Dispatchers.IO) {
+        try {
+            val snapshot = showtimesCollection
+                .whereGreaterThan("startTime", Timestamp.now())
+                .get()
+                .await()
+
+            val showtimes = snapshot.documents.mapNotNull { document ->
+                document.toObject(ShowtimeModel::class.java)
+            }
+            Result.success(showtimes)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting all showtimes: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
     suspend fun getShowtimesForMovie(movieId: String): Flow<List<ShowtimeModel>> = flow {
         try {
             val snapshot = showtimesCollection
@@ -128,6 +145,111 @@ class ShowtimeRepository {
                 Result.failure(Exception("Showtime not found"))
             }
         } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteShowtime(showtimeId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            showtimesCollection.document(showtimeId).delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getShowtime(showtimeId: String): ShowtimeModel {
+        val document = showtimesCollection.document(showtimeId).get().await()
+        return document.toObject(ShowtimeModel::class.java) ?: throw Exception("Showtime not found")
+    }
+
+    suspend fun checkShowtimeOverlap(
+        cinemaId: String,
+        screenId: String,
+        startTime: Date,
+        endTime: Date,
+        excludeShowtimeId: String? = null
+    ): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            // 1. Kiểm tra xem có showtime nào trong cùng rạp và phòng chiếu không
+            val snapshot = showtimesCollection
+                .whereEqualTo("cinemaId", cinemaId)
+                .whereEqualTo("screenId", screenId)
+                .get()
+                .await()
+
+            val showtimes = snapshot.documents.mapNotNull { document ->
+                document.toObject(ShowtimeModel::class.java)
+            }
+
+            // 2. Kiểm tra trùng lặp thời gian
+            val hasOverlap = showtimes.any { showtime ->
+                // Bỏ qua showtime hiện tại khi đang edit
+                if (excludeShowtimeId != null && showtime.id == excludeShowtimeId) {
+                    return@any false
+                }
+
+                val showtimeStart = showtime.startTime?.toDate()
+                val showtimeEnd = showtime.endTime?.toDate()
+
+                if (showtimeStart == null || showtimeEnd == null) {
+                    return@any false
+                }
+
+                // Kiểm tra xem có khoảng thời gian nào trùng nhau không
+                (startTime <= showtimeEnd && endTime >= showtimeStart)
+            }
+
+            Result.success(hasOverlap)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking showtime overlap: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun createShowtime(showtime: ShowtimeModel): Result<ShowtimeModel> = withContext(Dispatchers.IO) {
+        try {
+            // Kiểm tra trùng lặp trước khi tạo
+            val overlapResult = checkShowtimeOverlap(
+                cinemaId = showtime.cinemaId,
+                screenId = showtime.screenId,
+                startTime = showtime.startTime?.toDate() ?: Date(),
+                endTime = showtime.endTime?.toDate() ?: Date()
+            )
+
+            if (overlapResult.isSuccess && overlapResult.getOrNull() == true) {
+                return@withContext Result.failure(Exception("This time slot overlaps with an existing showtime in the same screen"))
+            }
+
+            val newShowtimeRef = showtimesCollection.document()
+            val newShowtime = showtime.copy(id = newShowtimeRef.id)
+            newShowtimeRef.set(newShowtime.toMap()).await()
+            Result.success(newShowtime)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error creating showtime: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateShowtime(showtime: ShowtimeModel): Result<ShowtimeModel> = withContext(Dispatchers.IO) {
+        try {
+            // Kiểm tra trùng lặp trước khi cập nhật
+            val overlapResult = checkShowtimeOverlap(
+                cinemaId = showtime.cinemaId,
+                screenId = showtime.screenId,
+                startTime = showtime.startTime?.toDate() ?: Date(),
+                endTime = showtime.endTime?.toDate() ?: Date(),
+                excludeShowtimeId = showtime.id
+            )
+
+            if (overlapResult.isSuccess && overlapResult.getOrNull() == true) {
+                return@withContext Result.failure(Exception("This time slot overlaps with an existing showtime in the same screen"))
+            }
+
+            showtimesCollection.document(showtime.id).set(showtime.toMap()).await()
+            Result.success(showtime)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating showtime: ${e.message}")
             Result.failure(e)
         }
     }

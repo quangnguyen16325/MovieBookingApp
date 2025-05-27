@@ -68,12 +68,10 @@ fun MovieCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val isDarkTheme = isSystemInDarkTheme()
-
-    // Sử dụng bảng màu ban đầu
-    val cardBackground = if (!isDarkTheme) DarkNavyLight.copy(alpha = 0.7f) else SurfaceLight
-    val textPrimaryColor = if (!isDarkTheme) Color.White else TextPrimaryLight
-    val textSecondaryColor = if (!isDarkTheme) Color.White.copy(alpha = 0.7f) else TextSecondaryLight
+    // Luôn sử dụng màu tối
+    val cardBackground = DarkNavyLight.copy(alpha = 0.7f)
+    val textPrimaryColor = Color.White
+    val textSecondaryColor = Color.White.copy(alpha = 0.7f)
 
     Card(
         modifier = modifier
@@ -285,9 +283,9 @@ fun MovieCarousel(
     onSeeAllClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isDarkTheme = isSystemInDarkTheme()
-    val textPrimaryColor = if (!isDarkTheme) Color.White else TextPrimaryLight
-    val textSecondaryColor = if (!isDarkTheme) Color.White.copy(alpha = 0.7f) else TextSecondaryLight
+    val isDarkTheme = true
+    val textPrimaryColor =  Color.White
+    val textSecondaryColor = Color.White.copy(alpha = 0.7f)
 
     Column(modifier = modifier.fillMaxWidth()) {
         // Header với title và nút See All
