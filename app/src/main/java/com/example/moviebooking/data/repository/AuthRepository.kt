@@ -413,4 +413,19 @@ class AuthRepository {
         }
     }
 
+    suspend fun updateProfileImage(imageUrl: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val currentUser = auth.currentUser ?: return@withContext Result.failure(Exception("User not authenticated"))
+            
+            // Cập nhật ảnh đại diện trong Firestore
+            usersCollection.document(currentUser.uid)
+                .update("profileImage", imageUrl)
+                .await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
 }

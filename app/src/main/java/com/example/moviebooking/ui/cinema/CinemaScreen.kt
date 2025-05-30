@@ -130,7 +130,7 @@ fun CinemaScreen(
                 items(cinemas) { cinema ->
                     CinemaCard(
                         cinema = cinema,
-                        onClick = { onCinemaClick(cinema.id) },
+                        onCinemaClick = { /* Xóa chuyển hướng */ },
                         textPrimaryColor = textPrimaryColor,
                         textSecondaryColor = textSecondaryColor
                     )
@@ -143,14 +143,14 @@ fun CinemaScreen(
 @Composable
 fun CinemaCard(
     cinema: CinemaModel,
-    onClick: () -> Unit,
+    onCinemaClick: () -> Unit,
     textPrimaryColor: Color,
     textSecondaryColor: Color
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(onClick = onCinemaClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
             containerColor = DarkNavyLight

@@ -26,8 +26,16 @@ class MembershipRepository {
                 ?: return@withContext Result.failure(Exception("User data not found"))
 
             // Tính điểm mới và cập nhật hạng thành viên
-            val newPoints = currentUserModel.membershipPoints + pointsToAdd
-            val newLevel = MembershipLevel.fromPoints(newPoints)
+            val newPoints = if (currentUserModel.membershipLevel == MembershipLevel.PREMIUM) {
+                currentUserModel.membershipPoints
+            } else {
+                currentUserModel.membershipPoints + pointsToAdd
+            }
+            val newLevel = if (currentUserModel.membershipLevel == MembershipLevel.PREMIUM) {
+                MembershipLevel.PREMIUM
+            } else {
+                MembershipLevel.fromPoints(newPoints)
+            }
 
             // Cập nhật thông tin người dùng
             val updatedUser = currentUserModel.copy(

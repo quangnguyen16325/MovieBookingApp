@@ -80,6 +80,11 @@ import com.example.moviebooking.ui.components.MovieButton
 import com.example.moviebooking.ui.components.MovieTextField
 import com.example.moviebooking.ui.components.PasswordTextField
 import com.example.moviebooking.ui.theme.*
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.net.Uri
+import androidx.compose.foundation.border
+import coil.compose.AsyncImage
 
 @Composable
 fun ProfileScreenWrapper(
@@ -118,7 +123,7 @@ fun ProfileScreen(
     onNavigateToAbout: () -> Unit,
     onNavigateToMembership: () -> Unit,
     onLogout: () -> Unit,
-    viewModel: ProfileViewModel = viewModel()
+    viewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory(LocalContext.current))
 ) {
     val userProfile by viewModel.userProfile.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -156,6 +161,12 @@ fun ProfileScreen(
             Color.Black.copy(alpha = 0.9f)
         )
     )
+
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.uploadProfileImage(it) }
+    }
 
     // Initialize edit form with current values when profile is loaded
     LaunchedEffect(userProfile) {
@@ -257,42 +268,32 @@ fun ProfileScreen(
                                     else -> 2.dp
                                 }
 
-                                Box(
+                                AsyncImage(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(userProfile?.profileImage)
+                                        .crossfade(true)
+                                        .build(),
+                                    contentDescription = "Profile Image",
                                     modifier = Modifier
-                                        .size(100.dp)
+                                        .size(120.dp)
                                         .clip(CircleShape)
-                                        .background(borderColor)
-                                        .padding(borderWidth)
-                                ) {
-                                    Image(
-                                        painter = rememberAsyncImagePainter(
-                                            ImageRequest.Builder(LocalContext.current)
-                                                .data(data = userProfile?.profileImage ?: R.drawable.ic_default_user)
-                                                .crossfade(true)
-                                                .build()
-                                        ),
-                                        contentDescription = "Profile Picture",
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .clip(CircleShape)
-                                            .shadow(8.dp, CircleShape),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                }
+                                        .border(borderWidth, borderColor, CircleShape)
+                                        .clickable { imagePicker.launch("image/*") },
+                                    contentScale = ContentScale.Crop
+                                )
 
                                 // Edit Icon
                                 Box(
                                     modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(CircleShape)
-                                        .background(AccentColor)
                                         .align(Alignment.BottomEnd)
-                                        .padding(4.dp),
+                                        .size(32.dp)
+                                        .background(AccentColor, CircleShape)
+                                        .clickable { imagePicker.launch("image/*") },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Edit,
-                                        contentDescription = "Edit Profile",
+                                        contentDescription = "Edit Profile Image",
                                         tint = Color.White,
                                         modifier = Modifier.size(16.dp)
                                     )

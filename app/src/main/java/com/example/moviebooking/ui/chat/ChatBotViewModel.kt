@@ -40,7 +40,7 @@ class ChatBotViewModel @Inject constructor() : ViewModel() {
 
                 val response = geminiApi.generateContent(
                     model = "gemini-1.5-flash",
-                    apiKey = "API_KEY",
+                    apiKey = "AIzaSyD-61uCx3N7LIUfrodnWbs1DTwNir3oXF0",
                     request = GeminiRequest(
                         contents = listOf(
                             Content(
